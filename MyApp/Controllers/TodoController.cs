@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using MyApp.Common;
-using MyApp.Data.Repos;
+﻿using Microsoft.AspNetCore.Mvc;
 using MyApp.Models.Dto;
 using MyApp.Models.Entity;
 using MyApp.Models.Enum;
@@ -14,12 +10,10 @@ namespace MyApp.Controllers
     [ApiController]
     public class TodoController : ControllerBase
     {
-        //private readonly ITodoRepository _repo;
         private readonly ITodoService _todoService;
 
         public TodoController(ITodoService todoService)
         {
-            //_repo = repo;
             _todoService = todoService;
         }
 

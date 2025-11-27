@@ -68,7 +68,6 @@ namespace MyApp.Services
 
             existing.Title = request.Title;
             existing.Content = request.Content;
-            existing.Completed = request.Completed;
             existing.StatusCode = request.StatusCode;
             existing.RemindTimestamp = request.RemindTimestamp;
 
