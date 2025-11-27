@@ -2,7 +2,7 @@
 
 namespace TestProject
 {
-    public class UnitTest1
+    public class UtilTest
     {
         [Fact]
         public void Test1()
