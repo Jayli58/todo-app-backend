@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using MyApp.Data.Repos;
+using MyApp.Services;
 
 namespace MyApp.Extensions
 {
@@ -26,6 +27,9 @@ namespace MyApp.Extensions
 
             // Repositories
             services.AddSingleton<ITodoRepository, DynamoTodoRepository>();
+            
+            // Services
+            services.AddSingleton<ITodoService, TodoService>();
 
             return services;
         }

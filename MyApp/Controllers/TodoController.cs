@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MyApp.Common;
 using MyApp.Data.Repos;
-using MyApp.Models;
+using MyApp.Models.Dto;
+using MyApp.Models.Entity;
+using MyApp.Models.Enum;
+using MyApp.Services;
 
 namespace MyApp.Controllers
 {
@@ -10,54 +14,57 @@ namespace MyApp.Controllers
     [ApiController]
     public class TodoController : ControllerBase
     {
-        private readonly ITodoRepository _repo;
+        //private readonly ITodoRepository _repo;
+        private readonly ITodoService _todoService;
 
-        public TodoController(ITodoRepository repo)
+        public TodoController(ITodoService todoService)
         {
-            _repo = repo;
+            //_repo = repo;
+            _todoService = todoService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTodos(string userId)
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodos(string userId, TodoStatus? status)
         {
-            var todos = await _repo.GetAllTodosAsync(userId);
+            IEnumerable<TodoItem> todos = await _todoService.GetTodosAsync(userId, status);
             return Ok(todos);
         }
 
         [HttpGet("{userId}/{todoId}")]
-        public async Task<IActionResult> GetTodo(string userId, string todoId)
+        public async Task<ActionResult<TodoItem>> GetTodo(string userId, string todoId)
         {
-            var todo = await _repo.GetTodoAsync(userId, todoId);
+            TodoItem todo = await _todoService.GetTodoAsync(userId, todoId);
             if (todo == null) return NotFound();
             return Ok(todo);
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddTodo(TodoItem todo)
+        public async Task<ActionResult<TodoItem>> AddTodo([FromBody] TodoItem todo)
         {
-            // Generate a new ULID for the TodoId
-            todo.TodoId = UlidGenerator.NewUlid();
-
-            await _repo.AddTodoAsync(todo);
-            return Ok(todo);
+            TodoItem insertedTodo = await _todoService.CreateTodoAsync(todo);
+            return Ok(insertedTodo);
         }
 
         [HttpPut("{userId}/{todoId}")]
-        public async Task<IActionResult> UpdateTodo(string userId, string todoId, [FromBody] TodoItem todo)
+        public async Task<ActionResult<TodoItem>> UpdateTodo(string userId, string todoId, [FromBody] UpdateTodoRequest request)
         {
-            todo.UserId = userId;
-            todo.TodoId = todoId;
-
-            await _repo.UpdateTodoAsync(todo);
+            TodoItem todo = await _todoService.UpdateTodoAsync(userId, todoId, request);
+            if (todo == null) return NotFound();
             return Ok(todo);
         }
 
         [HttpDelete("{userId}/{todoId}")]
-        public async Task<IActionResult> DeleteTodo(string userId, string todoId)
+        public async Task<ActionResult<bool>> DeleteTodo(string userId, string todoId)
         {
-            await _repo.DeleteTodoAsync(userId, todoId);
-            return Ok();
+            bool flag = await _todoService.DeleteTodoAsync(userId, todoId);
+            return Ok(flag);
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<TodoItem>>> SearchTodos(string userId, string? query)
+        {
+            IEnumerable<TodoItem> todos = await _todoService.SearchTodosAsync(userId, query);
+            return Ok(todos);
+        }
     }
 }
