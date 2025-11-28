@@ -27,9 +27,9 @@ namespace MyApp.Extensions
 
             // Repositories
             services.AddSingleton<ITodoRepository, DynamoTodoRepository>();
-            
-            // Services
-            services.AddSingleton<ITodoService, TodoService>();
+
+            // Services -- scoped per request, consistent to CurrentUser
+            services.AddScoped<ITodoService, TodoService>();
 
             return services;
         }
