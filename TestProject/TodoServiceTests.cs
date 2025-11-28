@@ -4,38 +4,43 @@ using MyApp.Models.Dto;
 using MyApp.Models.Entity;
 using MyApp.Models.Enum;
 using MyApp.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TestProject
 {
     public class TodoServiceTests
     {
         private readonly Mock<ITodoRepository> _repoMock;
+        private readonly Mock<ICurrentUser> _currentUserMock;
         private readonly TodoService _service;
 
         public TodoServiceTests()
         {
             _repoMock = new Mock<ITodoRepository>();
-            _service = new TodoService(_repoMock.Object);
+            _currentUserMock = new Mock<ICurrentUser>();
+            // Fake the authenticated user
+            _currentUserMock.Setup(u => u.UserId).Returns("user-id-001");
+            _service = new TodoService(_repoMock.Object, _currentUserMock.Object);
         }
 
         [Fact]
         public async Task CreateTodoAsync_ShouldAssignUlid_AndCallRepo()
         {
-            var inputTodo = new TodoItem { UserId = "U1" };
+            CreateTodoRequest request = new CreateTodoRequest
+            {
+                Title = "Test Title",
+                Content = "Test Content"
+            };
 
             _repoMock
                 .Setup(r => r.AddTodoAsync(It.IsAny<TodoItem>()))
                 .ReturnsAsync((TodoItem t) => t);
 
-            var result = await _service.CreateTodoAsync(inputTodo);
+            var result = await _service.CreateTodoAsync(request);
 
+            Assert.Equal("user-id-001", result.UserId);
+            Assert.Equal("Test Title", result.Title);
+            Assert.Equal("Test Content", result.Content);
             Assert.NotNull(result.TodoId);             // Ulid generated
-            Assert.Equal("U1", result.UserId);
             _repoMock.Verify(r => r.AddTodoAsync(It.IsAny<TodoItem>()), Times.Once);
         }
 

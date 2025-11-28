@@ -10,7 +10,7 @@ namespace MyApp.Services
 
         Task<TodoItem> GetTodoAsync(string userId, string todoId);
 
-        Task<TodoItem> CreateTodoAsync(TodoItem todoItem);
+        Task<TodoItem> CreateTodoAsync(CreateTodoRequest request);
 
         Task<TodoItem?> UpdateTodoAsync(string userId, string todoId, UpdateTodoRequest request);
 

@@ -38,10 +38,9 @@ namespace MyApp.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<TodoItem>> AddTodo([FromBody] TodoItem todo)
+        public async Task<ActionResult<TodoItem>> AddTodo([FromBody] CreateTodoRequest request)
         {
-            todo.UserId = _currentUser.UserId;
-            TodoItem insertedTodo = await _todoService.CreateTodoAsync(todo);
+            TodoItem insertedTodo = await _todoService.CreateTodoAsync(request);
             return Ok(insertedTodo);
         }
 

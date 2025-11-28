@@ -9,14 +9,25 @@ namespace MyApp.Services
     public class TodoService : ITodoService
     {
         private readonly ITodoRepository _repo;
+        private readonly ICurrentUser _currentUser;
 
-        public TodoService(ITodoRepository repo)
+        public TodoService(ITodoRepository repo, ICurrentUser currentUser)
         {
             _repo = repo;
+            _currentUser = currentUser;
         }
 
-        public async Task<TodoItem> CreateTodoAsync(TodoItem todo)
+        public async Task<TodoItem> CreateTodoAsync(CreateTodoRequest request)
         {
+            TodoItem todo = new TodoItem
+            {
+                UserId = _currentUser.UserId,
+                Title = request.Title,
+                Content = request.Content,
+                StatusCode = TodoStatus.Incomplete,
+                RemindTimestamp = null
+            };
+
             // Generate a new ULID for the TodoId
             todo.TodoId = UlidGenerator.NewUlid();
 
