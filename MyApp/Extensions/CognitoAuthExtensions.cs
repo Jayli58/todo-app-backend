@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace MyApp.Extensions
 {
+    // We still use id token here for authentication for simple fetching of user info
     public static class CognitoAuthExtensions
     {
         public static IServiceCollection AddCognitoAuth(this IServiceCollection services, IConfiguration config)

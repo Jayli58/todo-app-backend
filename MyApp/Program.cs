@@ -1,7 +1,13 @@
 using Amazon.DynamoDBv2;
 using MyApp.Extensions;
+using MyApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Needed for CurrentUser to access HttpContext
+builder.Services.AddHttpContextAccessor();
+// Make CurrentUser request-scoped; just like request-scoped bean in java spring
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 // import DynamoDB settings and register services
 builder.Services.AddDynamoDb(builder.Configuration);
