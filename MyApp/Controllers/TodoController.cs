@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MyApp.Models.Dto;
 using MyApp.Models.Entity;
 using MyApp.Models.Enum;
@@ -6,6 +7,8 @@ using MyApp.Services;
 
 namespace MyApp.Controllers
 {
+    // Enforce authorization for all endpoints in this controller
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TodoController : ControllerBase
@@ -40,9 +43,9 @@ namespace MyApp.Controllers
         }
 
         [HttpPut("{userId}/{todoId}")]
-        public async Task<ActionResult<TodoItem>> UpdateTodo(string userId, string todoId, [FromBody] UpdateTodoRequest request)
+        public async Task<ActionResult<TodoItem?>> UpdateTodo(string userId, string todoId, [FromBody] UpdateTodoRequest request)
         {
-            TodoItem todo = await _todoService.UpdateTodoAsync(userId, todoId, request);
+            TodoItem? todo = await _todoService.UpdateTodoAsync(userId, todoId, request);
             if (todo == null) return NotFound();
             return Ok(todo);
         }

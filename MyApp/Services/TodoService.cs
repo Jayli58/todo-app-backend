@@ -61,7 +61,7 @@ namespace MyApp.Services
             );
         }
 
-        public async Task<TodoItem> UpdateTodoAsync(string userId, string todoId, UpdateTodoRequest request)
+        public async Task<TodoItem?> UpdateTodoAsync(string userId, string todoId, UpdateTodoRequest request)
         {
             TodoItem existing = await _repo.GetTodoAsync(userId, todoId);
             if (existing == null) return null;
