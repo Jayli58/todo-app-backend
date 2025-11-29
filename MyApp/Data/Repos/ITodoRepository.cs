@@ -10,5 +10,7 @@ namespace MyApp.Data.Repos
         Task<TodoItem> AddTodoAsync(TodoItem todo);
         Task<bool> DeleteTodoAsync(string userId, string todoId);
         Task UpdateTodoAsync(TodoItem todo);
+
+        Task<bool> MarkAsDeletedAsync(string userId, string todoId);
     }
 }

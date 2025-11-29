@@ -38,7 +38,7 @@ namespace MyApp.Services
 
         public async Task<bool> DeleteTodoAsync(string userId, string todoId)
         {
-            return await _repo.DeleteTodoAsync(userId, todoId);
+            return await _repo.MarkAsDeletedAsync(userId, todoId);
         }
 
         public async Task<TodoItem> GetTodoAsync(string userId, string todoId)
@@ -51,8 +51,9 @@ namespace MyApp.Services
         public async Task<IEnumerable<TodoItem>> GetTodosAsync(string userId, TodoStatus? status)
         {
             IEnumerable<TodoItem> allTodos = await _repo.GetAllTodosAsync(userId, status);
-            
-            return allTodos;
+
+            // Return todos ordered by TodoId in descending order (newest first)
+            return allTodos.OrderByDescending(t => t.TodoId);
         }
 
         public async Task<IEnumerable<TodoItem>> SearchTodosAsync(string userId, string? query)
@@ -61,15 +62,18 @@ namespace MyApp.Services
 
             if (string.IsNullOrWhiteSpace(query))
             {
-                return allTodos;
+                // descending order (newest first)
+                return allTodos.OrderByDescending(t => t.TodoId);
             }
 
             query = query.ToLowerInvariant().Trim();
 
+            // Filter todos where Title or Content contains the query string (case-insensitive)
+            // descending order (newest first)
             return allTodos.Where(todo =>
                 (todo.Title != null && todo.Title.ToLowerInvariant().Contains(query)) ||
                 (todo.Content != null && todo.Content.ToLowerInvariant().Contains(query))
-            );
+            ).OrderByDescending(t => t.TodoId);
         }
 
         public async Task<TodoItem?> UpdateTodoAsync(string userId, string todoId, UpdateTodoRequest request)

@@ -63,5 +63,16 @@ namespace MyApp.Data.Repos
         {
             await _context.SaveAsync(todo);
         }
+
+        public async Task<bool> MarkAsDeletedAsync(string userId, string todoId)
+        {
+            TodoItem todo = await _context.LoadAsync<TodoItem>(userId, todoId);
+
+            if (todo == null) return false;
+
+            todo.StatusCode = TodoStatus.Deleted; // 3
+            await _context.SaveAsync(todo);
+            return true;
+        }
     }
 }
