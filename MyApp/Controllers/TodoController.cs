@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MyApp.Exceptions;
 using MyApp.Models.Dto;
 using MyApp.Models.Entity;
 using MyApp.Models.Enum;
@@ -33,7 +34,7 @@ namespace MyApp.Controllers
         public async Task<ActionResult<TodoItem>> GetTodo(string todoId)
         {
             TodoItem todo = await _todoService.GetTodoAsync(_currentUser.UserId, todoId);
-            if (todo == null) return NotFound();
+            if (todo == null) throw new TodoNotFoundException();
             return Ok(todo);
         }
 
@@ -48,7 +49,7 @@ namespace MyApp.Controllers
         public async Task<ActionResult<TodoItem?>> UpdateTodo(string todoId, [FromBody] UpdateTodoRequest request)
         {
             TodoItem? todo = await _todoService.UpdateTodoAsync(_currentUser.UserId, todoId, request);
-            if (todo == null) return NotFound();
+            if (todo == null) throw new TodoNotFoundException();
             return Ok(todo);
         }
 

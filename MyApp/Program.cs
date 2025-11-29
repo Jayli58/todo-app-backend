@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2;
+using MyApp.Exceptions;
 using MyApp.Extensions;
 using MyApp.Services;
 
@@ -27,6 +28,15 @@ builder.Services.AddControllers()
 // Add Cognito authentication
 builder.Services.AddCognitoAuth(builder.Configuration);
 
+// Configure CORS to allow requests from frontend
+builder.Services.AddMyCors(builder.Configuration);
+
+// Register global exception handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+// Register ProblemDetails middleware
+builder.Services.AddProblemDetails();
+
+
 
 var app = builder.Build();
 
@@ -36,30 +46,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    // todo -- check this
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
+// Use custom exception handler middleware
+app.UseExceptionHandler();
 
 var client = app.Services.GetRequiredService<IAmazonDynamoDB>();
 
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseCors(CorsExtensions.GetPolicyName());
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+//app.UseStaticFiles();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
+// Map controller routes
+app.MapControllers();
 
 app.Run();
 

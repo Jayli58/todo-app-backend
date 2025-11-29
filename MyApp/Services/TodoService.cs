@@ -77,10 +77,18 @@ namespace MyApp.Services
             TodoItem existing = await _repo.GetTodoAsync(userId, todoId);
             if (existing == null) return null;
 
-            existing.Title = request.Title;
-            existing.Content = request.Content;
-            existing.StatusCode = request.StatusCode;
-            existing.RemindTimestamp = request.RemindTimestamp;
+            // Update only fields that the client actually sent
+            if (request.Title != null)
+                existing.Title = request.Title;
+
+            if (request.Content != null)
+                existing.Content = request.Content;
+
+            if (request.StatusCode.HasValue)
+                existing.StatusCode = request.StatusCode.Value;
+
+            if (request.RemindTimestamp.HasValue)
+                existing.RemindTimestamp = request.RemindTimestamp.Value;
 
             await _repo.UpdateTodoAsync(existing);
 
