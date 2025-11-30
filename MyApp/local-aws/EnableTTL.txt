@@ -10,3 +10,16 @@ aws dynamodb describe-table --table-name TodoReminders --endpoint-url http://loc
 // verify streams are enabled and get the stream ARN
 aws dynamodb describe-table --table-name TodoReminders --endpoint-url http://localhost:4566 --profile localstack --query "Table.LatestStreamArn"
 
+// verify TTL settings
+aws dynamodb describe-time-to-live --table-name TodoReminders --endpoint-url http://localhost:4566 --profile localstack
+
+// list event source mappings for the ReminderStreamLambda function
+aws lambda list-event-source-mappings --function-name ReminderStreamLambda --endpoint-url http://localhost:4566 --profile localstack
+
+// create event source mapping for the ReminderStreamLambda function
+aws lambda create-event-source-mapping `
+  --function-name ReminderStreamLambda `
+  --event-source arn:aws:dynamodb:ap-southeast-2:000000000000:table/TodoReminders/stream/2025-11-30T02:14:24.732 `
+  --starting-position LATEST `
+  --endpoint-url http://localhost:4566
+

@@ -46,7 +46,5 @@ namespace RemainderLambda.Handlers
                 );
             }
         }
-
-
     }
 }

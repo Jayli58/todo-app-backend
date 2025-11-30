@@ -67,7 +67,7 @@ namespace MyApp.Controllers
             return Ok(todos);
         }
 
-        [HttpPut("{todoId}/remainder")]
+        [HttpPut("{todoId}/reminder")]
         public async Task<ActionResult> SetRemainder(string todoId, [FromBody] SetReminderRequest request)
         {
             // validate timestamp
