@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:3.4
+    ports:
+      - "4566:4566"   # Main localstack gateway
+      - "4571:4571"   # SES SMTP mock
+    environment:
+      - SERVICES=dynamodb,dynamodbstreams,lambda,ses,sqs,sns,iam
+      - DEBUG=1
+      - LAMBDA_EXECUTOR=docker
+      - AWS_DEFAULT_REGION=ap-southeast-2
+    volumes:
+      - "./localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
