@@ -17,5 +17,7 @@ namespace MyApp.Services
         Task<bool> DeleteTodoAsync(string userId, string todoId);
 
         Task<IEnumerable<TodoItem>> GetTodosAsync(string userId, TodoStatus? status);
+
+        Task<bool> SetRemainderAsync(string userId, string todoId, long RemindTimestamp);
     }
 }

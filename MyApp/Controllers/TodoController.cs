@@ -66,5 +66,19 @@ namespace MyApp.Controllers
             IEnumerable<TodoItem> todos = await _todoService.SearchTodosAsync(_currentUser.UserId, query);
             return Ok(todos);
         }
+
+        [HttpPut("{todoId}/remainder")]
+        public async Task<ActionResult> SetRemainder(string todoId, [FromBody] SetReminderRequest request)
+        {
+            // validate timestamp
+            if (request.RemindAtEpoch <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                return BadRequest("Reminder time must be in the future.");
+
+            bool flag = await _todoService.SetRemainderAsync(_currentUser.UserId, todoId, request.RemindAtEpoch);
+            if (!flag) throw new TodoNotFoundException();
+
+            return Ok();
+        }
+
     }
 }

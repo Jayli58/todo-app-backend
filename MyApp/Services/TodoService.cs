@@ -9,11 +9,13 @@ namespace MyApp.Services
     public class TodoService : ITodoService
     {
         private readonly ITodoRepository _repo;
+        private readonly IReminderRepository _repoReminder;
         private readonly ICurrentUser _currentUser;
 
-        public TodoService(ITodoRepository repo, ICurrentUser currentUser)
+        public TodoService(ITodoRepository repo, IReminderRepository repoReminder, ICurrentUser currentUser)
         {
             _repo = repo;
+            _repoReminder = repoReminder;
             _currentUser = currentUser;
         }
 
@@ -74,6 +76,43 @@ namespace MyApp.Services
                 (todo.Title != null && todo.Title.ToLowerInvariant().Contains(query)) ||
                 (todo.Content != null && todo.Content.ToLowerInvariant().Contains(query))
             ).OrderByDescending(t => t.TodoId);
+        }
+
+        public async Task<bool> SetRemainderAsync(string userId, string todoId, long remindTimestamp)
+        {
+            TodoItem existing = await _repo.GetTodoAsync(userId, todoId);
+            // should not be null
+            if (existing == null) return false;
+
+            // update the remind timestamp
+            existing.RemindTimestamp = remindTimestamp;
+            await _repo.UpdateTodoAsync(existing);
+
+            // create or update the reminder
+            TodoReminder? existingReminder = await _repoReminder.GetByTodoAsync(userId, todoId);
+
+            TodoReminder reminder;
+
+            if (existingReminder != null)
+            {
+                reminder = existingReminder;
+                reminder.RemindAtEpoch = remindTimestamp;
+            }
+            else
+            {
+                reminder = new TodoReminder
+                {
+                    UserId = userId,
+                    TodoId = todoId,
+                    Email = _currentUser.Email,
+                    Title = existing.Title,
+                    Content = existing.Content,                    
+                    RemindAtEpoch = remindTimestamp
+                };
+            }
+            await _repoReminder.UpsertAsync(reminder);
+
+            return true;
         }
 
         public async Task<TodoItem?> UpdateTodoAsync(string userId, string todoId, UpdateTodoRequest request)
