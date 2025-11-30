@@ -50,6 +50,8 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 var client = app.Services.GetRequiredService<IAmazonDynamoDB>();
+var tables = await client.ListTablesAsync();
+Console.WriteLine("Tables visible to .NET: " + string.Join(", ", tables.TableNames));
 
 app.UseHttpsRedirection();
 app.UseRouting();

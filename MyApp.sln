@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyApp", "MyApp\MyApp.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{58C2059F-B110-4B90-98A3-99EE89A5D650}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemainderLambda", "RemainderLambda\src\RemainderLambda\RemainderLambda.csproj", "{62EE5EB3-FB93-EA16-651F-73C439C030CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemainderLambda.Tests", "RemainderLambda\test\RemainderLambda.Tests\RemainderLambda.Tests.csproj", "{86E5F1CE-EEFC-2E02-FBCD-355C12ADA0D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{58C2059F-B110-4B90-98A3-99EE89A5D650}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58C2059F-B110-4B90-98A3-99EE89A5D650}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58C2059F-B110-4B90-98A3-99EE89A5D650}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62EE5EB3-FB93-EA16-651F-73C439C030CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62EE5EB3-FB93-EA16-651F-73C439C030CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62EE5EB3-FB93-EA16-651F-73C439C030CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62EE5EB3-FB93-EA16-651F-73C439C030CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86E5F1CE-EEFC-2E02-FBCD-355C12ADA0D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E5F1CE-EEFC-2E02-FBCD-355C12ADA0D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E5F1CE-EEFC-2E02-FBCD-355C12ADA0D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E5F1CE-EEFC-2E02-FBCD-355C12ADA0D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

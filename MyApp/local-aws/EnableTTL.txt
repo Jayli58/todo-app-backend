@@ -1,0 +1,12 @@
+// enable TTL on the TodoReminders table for the RemindAtEpoch attribute
+aws dynamodb update-time-to-live --table-name TodoReminders --time-to-live-specification "Enabled=true, AttributeName=RemindAtEpoch" --endpoint-url http://localhost:4566 --profile localstack
+
+// enable streams on the TodoReminders table with NEW_AND_OLD_IMAGES view type
+aws dynamodb update-table --table-name TodoReminders --stream-specification StreamEnabled=true,StreamViewType=NEW_AND_OLD_IMAGES --endpoint-url http://localhost:4566 --profile localstack
+
+// veryify TTL is enabled
+aws dynamodb describe-table --table-name TodoReminders --endpoint-url http://localhost:4566 --profile localstack
+
+// verify streams are enabled and get the stream ARN
+aws dynamodb describe-table --table-name TodoReminders --endpoint-url http://localhost:4566 --profile localstack --query "Table.LatestStreamArn"
+

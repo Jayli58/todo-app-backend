@@ -10,14 +10,23 @@ namespace MyApp.Extensions
         public static IServiceCollection AddDynamoDb(this IServiceCollection services, IConfiguration config)
         {
             var dynamoUrl = config["AWS:DynamoDB:ServiceURL"];
+            var region = config["AWS:DynamoDB:Region"];
+            var awsAccessKeyId = config["AWS:DynamoDB:AccessKeyId"];
+            var awsSecretAccessKey = config["AWS:DynamoDB:SecretAccessKey"];
+
+            //Console.WriteLine("DynamoDB URL: " + dynamoUrl);
 
             // DynamoDB client
             services.AddSingleton<IAmazonDynamoDB>(sp =>
             {
                 return new AmazonDynamoDBClient(
+                    awsAccessKeyId: awsAccessKeyId,
+                    awsSecretAccessKey: awsSecretAccessKey,
                     new AmazonDynamoDBConfig
                     {
-                        ServiceURL = dynamoUrl
+                        ServiceURL = dynamoUrl,
+                        AuthenticationRegion = region,
+                        UseHttp = true
                     }
                 );
             });
