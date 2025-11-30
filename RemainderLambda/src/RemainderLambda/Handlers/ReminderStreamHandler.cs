@@ -8,9 +8,9 @@ namespace RemainderLambda.Handlers
 {
     public class ReminderStreamHandler
     {
-        private readonly SesEmailService _email;
+        private readonly IEmailService _email;
 
-        public ReminderStreamHandler(SesEmailService emailService)
+        public ReminderStreamHandler(IEmailService emailService)
         {
             _email = emailService;
         }
@@ -19,32 +19,45 @@ namespace RemainderLambda.Handlers
         {
             foreach (var record in dynamoEvent.Records)
             {
-                if (record.EventName != "REMOVE")
-                    continue;
-
-                var img = record.Dynamodb.OldImage;
-                if (img == null)
-                    continue;
-
-                var reminder = new ReminderRecord
+                try
                 {
-                    ReminderId = img["ReminderId"].S,
-                    UserId = img["UserId"].S,
-                    TodoId = img["TodoId"].S,
-                    Email = img["Email"].S,
-                    Title = img["Title"].S,
-                    Content = img["Content"].S,
-                    RemindAtEpoch = long.Parse(img["RemindAtEpoch"].N)
-                };
-
-                context.Logger.LogInformation($"[Lambda] Processing ReminderId={reminder.ReminderId} under UserId={reminder.UserId}");
-
-                await _email.SendEmailAsync(
-                    reminder.Email,
-                    subject: reminder.Title,
-                    body: reminder.Content
-                );
+                    await ProcessRecordAsync(record, context);
+                }
+                catch (Exception ex)
+                {
+                    context.Logger.LogError($"[ERROR] Failed processing record {record.EventID}: {ex}");               
+                }
             }
         }
+
+        private async Task ProcessRecordAsync(DynamoDBEvent.DynamodbStreamRecord record, ILambdaContext context)
+        {
+            if (record.EventName != "REMOVE")
+                return;
+
+            var img = record.Dynamodb.OldImage;
+            if (img == null)
+                return;
+
+            var reminder = new ReminderRecord
+            {
+                ReminderId = img["ReminderId"].S,
+                UserId = img["UserId"].S,
+                TodoId = img["TodoId"].S,
+                Email = img["Email"].S,
+                Title = img["Title"].S,
+                Content = img["Content"].S,
+                RemindAtEpoch = long.Parse(img["RemindAtEpoch"].N)
+            };
+
+            context.Logger.LogInformation($"[Lambda] Processing ReminderId={reminder.ReminderId}");
+
+            await _email.SendEmailAsync(
+                reminder.Email,
+                reminder.Title,
+                reminder.Content
+            );
+        }
+
     }
 }

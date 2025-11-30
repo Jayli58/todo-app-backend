@@ -3,11 +3,7 @@ using Amazon.Lambda.Serialization.SystemTextJson;
 using Amazon.Lambda.TestUtilities;
 using RemainderLambda.Handlers;
 using RemainderLambda.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace RemainderLambda.Tests
@@ -62,8 +58,48 @@ namespace RemainderLambda.Tests
             Console.WriteLine(logs);
 
             // Assert
-            Assert.Contains("REM-123", logs);
-            Assert.Contains("USER-1", logs);
+            Assert.Contains("Processing ReminderId=REM-123", logs);
+        }
+
+        [Fact]
+        public async Task HandleAsync_Should_Not_Throw_Error_When_Email_Fails()
+        {
+            // Arrange failing SES mock
+            var handler = new ReminderStreamHandler(new FakeFailingEmailService());
+            var context = new TestLambdaContext();
+
+            // Minimal REMOVE event
+            var json = @"
+            {
+              ""Records"": [
+                {
+                  ""eventName"": ""REMOVE"",
+                  ""dynamodb"": {
+                    ""OldImage"": {
+                      ""ReminderId"": { ""S"": ""REM-ERR"" },
+                      ""UserId"": { ""S"": ""USER-X"" },
+                      ""TodoId"": { ""S"": ""TODO-X"" },
+                      ""Email"": { ""S"": ""foo@bar.com"" },
+                      ""Title"": { ""S"": ""Test"" },
+                      ""Content"": { ""S"": ""Testing"" },
+                      ""RemindAtEpoch"": { ""N"": ""1732885200"" }
+                    }
+                  }
+                }
+              ]
+            }";
+
+            var serializer = new DefaultLambdaJsonSerializer();
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            var dynamoEvent = serializer.Deserialize<DynamoDBEvent>(stream);
+
+            // Act — This should NOT throw due to try/catch inside handler
+            await handler.HandleAsync(dynamoEvent, context);
+
+            // Assert
+            var logs = ((TestLambdaLogger)context.Logger).Buffer.ToString();
+            Assert.Contains("ERROR", logs);
+            Assert.Contains("REM-ERR", logs);
         }
     }
 }

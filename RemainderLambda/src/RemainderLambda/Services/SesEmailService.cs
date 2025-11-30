@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RemainderLambda.Services
 {
-    public class SesEmailService
+    public class SesEmailService : IEmailService
     {
         public Task SendEmailAsync(string to, string subject, string body)
         {
