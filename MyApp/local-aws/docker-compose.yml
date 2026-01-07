@@ -14,4 +14,7 @@ services:
       - AWS_DEFAULT_REGION=ap-southeast-2
     volumes:
       - "./localstack:/var/lib/localstack"
+      # to mount init scripts for db table creation
+      - "./localstack-init:/etc/localstack/init/ready.d"
       - "/var/run/docker.sock:/var/run/docker.sock"
+

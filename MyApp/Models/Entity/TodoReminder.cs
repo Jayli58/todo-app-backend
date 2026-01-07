@@ -1,5 +1,4 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
-using MyApp.Models.Enum;
 
 namespace MyApp.Models.Entity
 {
