@@ -32,9 +32,11 @@ namespace RemainderLambda.Handlers
 
         private async Task ProcessRecordAsync(DynamoDBEvent.DynamodbStreamRecord record, ILambdaContext context)
         {
+            // ttl expiration leads to REMOVE events
             if (record.EventName != "REMOVE")
                 return;
 
+            // Extract old image only
             var img = record.Dynamodb.OldImage;
             if (img == null)
                 return;

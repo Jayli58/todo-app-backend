@@ -13,6 +13,7 @@ awslocal dynamodb create-table \
       AttributeName=UserId,KeyType=HASH \
       AttributeName=TodoId,KeyType=RANGE \
   --billing-mode PAY_PER_REQUEST \
+  # Create the table quietly
   >/dev/null 2>&1 || echo "[init] Todos already exists"
 
 # Create TodoReminders table (UserId PK, TodoId SK)

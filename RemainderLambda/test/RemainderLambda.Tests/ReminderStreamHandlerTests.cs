@@ -54,7 +54,7 @@ namespace RemainderLambda.Tests
             await handler.HandleAsync(dynamoEvent, context);
 
             // Get logs
-            var logs = ((TestLambdaLogger)context.Logger).Buffer.ToString();
+            var logs = ((TestLambdaLogger) context.Logger).Buffer.ToString();
             Console.WriteLine(logs);
 
             // Assert
