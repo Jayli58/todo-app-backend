@@ -24,10 +24,10 @@ public class FunctionTest
               ""awsRegion"": ""ap-southeast-2"",
               ""dynamodb"": {
                 ""Keys"": {
-                  ""ReminderId"": { ""S"": ""REM-123"" }
+                  ""UserId"": { ""S"": ""USER-1"" },
+                  ""TodoId"": { ""S"": ""TODO-1"" }
                 },
                 ""OldImage"": {
-                  ""ReminderId"": { ""S"": ""REM-123"" },
                   ""UserId"": { ""S"": ""USER-1"" },
                   ""TodoId"": { ""S"": ""TODO-1"" },
                   ""Email"": { ""S"": ""test@example.com"" },

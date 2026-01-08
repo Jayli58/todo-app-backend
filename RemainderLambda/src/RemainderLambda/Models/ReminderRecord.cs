@@ -8,7 +8,7 @@ namespace RemainderLambda.Models
 {
     public class ReminderRecord
     {
-        public string ReminderId { get; set; }
+        // public string ReminderId { get; set; }
         public string UserId { get; set; }
         public string TodoId { get; set; }
         public string Email { get; set; }

@@ -44,7 +44,7 @@ namespace RemainderLambda.Handlers
 
             var reminder = new ReminderRecord
             {
-                ReminderId = img["ReminderId"].S,
+                // ReminderId = img["ReminderId"].S,
                 UserId = img["UserId"].S,
                 TodoId = img["TodoId"].S,
                 Email = img["Email"].S,
@@ -53,7 +53,7 @@ namespace RemainderLambda.Handlers
                 RemindAtEpoch = long.Parse(img["RemindAtEpoch"].N)
             };
 
-            context.Logger.LogInformation($"[Lambda] Processing ReminderId={reminder.ReminderId}");
+            context.Logger.LogInformation($"[Lambda] Processing TodoId={reminder.TodoId}");
 
             string messageId = await _email.SendEmailAsync(
                 reminder.Email,
@@ -62,7 +62,7 @@ namespace RemainderLambda.Handlers
             );
 
             context.Logger.LogInformation(
-                $"Email sent for ReminderId={reminder.ReminderId}, MessageId={messageId}"
+                $"Email sent for TodoId={reminder.TodoId}, MessageId={messageId}"
             );
         }
 

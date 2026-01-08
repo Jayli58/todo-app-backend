@@ -26,10 +26,10 @@ namespace RemainderLambda.Tests
                       ""awsRegion"": ""ap-southeast-2"",
                       ""dynamodb"": {
                         ""Keys"": {
-                          ""ReminderId"": { ""S"": ""REM-123"" }
+                          ""UserId"": { ""S"": ""USER-1"" },
+                          ""TodoId"": { ""S"": ""TODO-1"" }
                         },
                         ""OldImage"": {
-                          ""ReminderId"": { ""S"": ""REM-123"" },
                           ""UserId"":    { ""S"": ""USER-1"" },
                           ""TodoId"":    { ""S"": ""TODO-1"" },
                           ""Email"":     { ""S"": ""test@example.com"" },
@@ -77,9 +77,9 @@ namespace RemainderLambda.Tests
             Console.WriteLine(logs);
 
             // Assert
-            Assert.Contains("Processing ReminderId=REM-123", logs);
+            Assert.Contains("Processing TodoId=TODO-1", logs);
             // check if email was "sent"
-            Assert.Contains("MessageId=", logs);
+            Assert.Contains("Email sent for TodoId", logs);
         }
 
         [Fact]
@@ -97,7 +97,6 @@ namespace RemainderLambda.Tests
                   ""eventName"": ""REMOVE"",
                   ""dynamodb"": {
                     ""OldImage"": {
-                      ""ReminderId"": { ""S"": ""REM-ERR"" },
                       ""UserId"": { ""S"": ""USER-X"" },
                       ""TodoId"": { ""S"": ""TODO-X"" },
                       ""Email"": { ""S"": ""foo@bar.com"" },
@@ -120,7 +119,7 @@ namespace RemainderLambda.Tests
             // Assert
             var logs = ((TestLambdaLogger)context.Logger).Buffer.ToString();
             Assert.Contains("ERROR", logs);
-            Assert.Contains("REM-ERR", logs);
+            Assert.Contains("TODO-X", logs);
         }
     }
 }
