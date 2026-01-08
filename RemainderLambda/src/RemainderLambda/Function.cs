@@ -18,7 +18,8 @@ public class Function
         // Create SES client using environment variables for configuration
         EnvLoader.LoadDotEnv();
 
-        var serviceUrl = Environment.GetEnvironmentVariable("SES_SERVICE_URL");
+        //var serviceUrl = Environment.GetEnvironmentVariable("SES_SERVICE_URL");
+        var serviceUrl = LocalstackEndpointResolver.ResolveSesServiceUrl();
         var authRegion = Environment.GetEnvironmentVariable("SES_AUTH_REGION");
         var sender = Environment.GetEnvironmentVariable("SES_SENDER")
                      ?? throw new InvalidOperationException("Missing SES_SENDER");
@@ -44,5 +45,4 @@ public class Function
         await _handler.HandleAsync(dynamoEvent, context);
         context.Logger.LogInformation("[Function] Done processing reminder records");
     }
-
 }
