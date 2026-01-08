@@ -1,6 +1,7 @@
 ﻿using Amazon.Lambda.DynamoDBEvents;
 using Amazon.Lambda.Serialization.SystemTextJson;
 using Amazon.Lambda.TestUtilities;
+using Amazon.SimpleEmail;
 using RemainderLambda.Handlers;
 using RemainderLambda.Services;
 using System.Text;
@@ -47,7 +48,25 @@ namespace RemainderLambda.Tests
             var dynamoEvent = serializer.Deserialize<DynamoDBEvent>(stream);
 
             // Create handler + SES mock
-            var handler = new ReminderStreamHandler(new SesEmailService());
+            // Create SES client using environment variables for configuration
+            EnvLoader.LoadDotEnv();
+
+            var serviceUrl = Environment.GetEnvironmentVariable("SES_SERVICE_URL");
+            var authRegion = Environment.GetEnvironmentVariable("SES_AUTH_REGION");
+            var sender = Environment.GetEnvironmentVariable("SES_SENDER")
+                         ?? throw new InvalidOperationException("Missing SES_SENDER");
+
+            var sesConfig = new AmazonSimpleEmailServiceConfig
+            {
+                ServiceURL = serviceUrl,
+                UseHttp = true,
+                // important!!!
+                AuthenticationRegion = authRegion
+            };
+
+            var sesClient = new AmazonSimpleEmailServiceClient(sesConfig);
+
+            var handler = new ReminderStreamHandler(new SesEmailService(sesClient, sender));
             var context = new TestLambdaContext();
 
             // Act
@@ -59,6 +78,8 @@ namespace RemainderLambda.Tests
 
             // Assert
             Assert.Contains("Processing ReminderId=REM-123", logs);
+            // check if email was "sent"
+            Assert.Contains("MessageId=", logs);
         }
 
         [Fact]

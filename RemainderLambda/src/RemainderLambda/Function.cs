@@ -1,5 +1,6 @@
 using Amazon.Lambda.Core;
 using Amazon.Lambda.DynamoDBEvents;
+using Amazon.SimpleEmail;
 using RemainderLambda.Handlers;
 using RemainderLambda.Services;
 
@@ -14,8 +15,26 @@ public class Function
 
     public Function()
     {
+        // Create SES client using environment variables for configuration
+        EnvLoader.LoadDotEnv();
+
+        var serviceUrl = Environment.GetEnvironmentVariable("SES_SERVICE_URL");
+        var authRegion = Environment.GetEnvironmentVariable("SES_AUTH_REGION");
+        var sender = Environment.GetEnvironmentVariable("SES_SENDER")
+                     ?? throw new InvalidOperationException("Missing SES_SENDER");
+
+        var sesConfig = new AmazonSimpleEmailServiceConfig
+        {
+            ServiceURL = serviceUrl,
+            UseHttp = true,
+            // important!!!
+            AuthenticationRegion = authRegion
+        };
+
+        var sesClient = new AmazonSimpleEmailServiceClient(sesConfig);
+
         // Initialize the handler with the SES email service as entry point
-        _handler = new ReminderStreamHandler(new SesEmailService());
+        _handler = new ReminderStreamHandler(new SesEmailService(sesClient, sender));
     }
 
     // Lambda entrypoint

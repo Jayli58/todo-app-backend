@@ -12,6 +12,8 @@ services:
       - DEBUG=1
       - LAMBDA_EXECUTOR=docker
       - AWS_DEFAULT_REGION=ap-southeast-2
+      # Enable TTL deletions
+      - DYNAMODB_REMOVE_EXPIRED_ITEMS=1
     volumes:
       - "./localstack:/var/lib/localstack"
       # to mount init scripts for db table creation

@@ -9,7 +9,7 @@ namespace RemainderLambda.Tests
 {
     public class FakeFailingEmailService : IEmailService
     {
-        public Task SendEmailAsync(string to, string subject, string body)
+        public Task<string> SendEmailAsync(string to, string subject, string body)
         {
             throw new Exception("Simulated SES failure");
         }

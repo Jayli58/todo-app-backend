@@ -1,5 +1,6 @@
 ﻿using Amazon.Lambda.Core;
 using Amazon.Lambda.DynamoDBEvents;
+using Amazon.SimpleEmail.Model;
 using RemainderLambda.Models;
 using RemainderLambda.Services;
 
@@ -54,10 +55,14 @@ namespace RemainderLambda.Handlers
 
             context.Logger.LogInformation($"[Lambda] Processing ReminderId={reminder.ReminderId}");
 
-            await _email.SendEmailAsync(
+            string messageId = await _email.SendEmailAsync(
                 reminder.Email,
                 reminder.Title,
                 reminder.Content
+            );
+
+            context.Logger.LogInformation(
+                $"Email sent for ReminderId={reminder.ReminderId}, MessageId={messageId}"
             );
         }
 

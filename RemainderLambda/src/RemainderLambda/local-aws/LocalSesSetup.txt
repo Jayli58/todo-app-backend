@@ -17,3 +17,53 @@ aws ses send-email `
         --destination 'ToAddresses=jeff@aws.com'    `
         --endpoint-url http://localhost:4566    `
         --profile localstack
+
+// list lambda functions to confirm local AWS setup
+aws lambda list-functions --endpoint-url http://localhost:4566 --profile localstack
+        
+// zip lambda function code in powerhell
+Compress-Archive -Path .\pub\* -DestinationPath .\lambda.zip -Force
+
+// Deploy lambda function to local AWS (localstack)
+aws lambda create-function `
+  --function-name ReminderStreamLambda `
+  --runtime dotnet8 `
+  --handler RemainderLambda::RemainderLambda.Function::FunctionHandler `
+  --zip-file fileb://lambda.zip `
+  --role arn:aws:iam::000000000000:role/lambda-role `
+  --endpoint-url http://localhost:4566 `
+  --profile localstack
+
+// list lambda functions to confirm deployment
+aws lambda list-functions --endpoint-url http://localhost:4566 --profile localstack
+
+// update lambda function code in local AWS (localstack)
+aws lambda update-function-code `
+  --function-name ReminderStreamLambda `
+  --zip-file fileb://lambda.zip `
+  --endpoint-url http://localhost:4566 `
+  --profile localstack
+
+// create event source mapping for lambda to DynamoDB stream
+$streamArn = aws dynamodb describe-table `
+  --table-name TodoReminders `
+  --endpoint-url http://localhost:4566 `
+  --profile localstack `
+  --query "Table.LatestStreamArn" `
+  --output text
+
+aws lambda create-event-source-mapping `
+  --function-name ReminderStreamLambda `
+  --event-source-arn $streamArn `
+  --starting-position LATEST `
+  --endpoint-url http://localhost:4566 `
+  --profile localstack
+
+// list event source mappings to confirm
+aws lambda list-event-source-mappings `
+  --function-name ReminderStreamLambda `
+  --endpoint-url http://localhost:4566 `
+  --profile localstack
+
+// clear expired items from DynamoDB table
+Invoke-WebRequest -Method Delete http://localhost:4566/_aws/dynamodb/expired
