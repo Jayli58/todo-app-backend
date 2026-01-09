@@ -2,8 +2,12 @@ using Amazon.DynamoDBv2;
 using MyApp.Exceptions;
 using MyApp.Extensions;
 using MyApp.Services;
+using Amazon.Lambda.AspNetCoreServer.Hosting;
+using Amazon.Lambda.AspNetCoreServer;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 // Needed for CurrentUser to access HttpContext
 builder.Services.AddHttpContextAccessor();
@@ -36,8 +40,6 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 // Register ProblemDetails middleware
 builder.Services.AddProblemDetails();
 
-
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -50,10 +52,10 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 var client = app.Services.GetRequiredService<IAmazonDynamoDB>();
-var tables = await client.ListTablesAsync();
-Console.WriteLine("Tables visible to .NET: " + string.Join(", ", tables.TableNames));
+//var tables = await client.ListTablesAsync();
+//Console.WriteLine("Tables visible to .NET: " + string.Join(", ", tables.TableNames));
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors(CorsExtensions.GetPolicyName());
