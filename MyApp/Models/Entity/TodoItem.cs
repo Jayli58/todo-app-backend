@@ -7,12 +7,12 @@ namespace MyApp.Models.Entity
     public class TodoItem
     {
         [DynamoDBHashKey]           // Partition Key
-        public string UserId { get; set; }
+        public required string UserId { get; set; }
 
         [DynamoDBRangeKey]          // Sort Key
-        public string TodoId { get; set; }
-        public string Title { get; set; }
-        public string Content { get; set; }
+        public required string TodoId { get; set; }
+        public required string Title { get; set; }
+        public required string Content { get; set; }
         public long? RemindTimestamp { get; set; }
         // 1 - Incomplete, 2 - Complete, 3 - Deleted
         public TodoStatus StatusCode { get; set; }

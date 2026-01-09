@@ -1,4 +1,5 @@
 ﻿using Moq;
+using MyApp.Common;
 using MyApp.Data.Repos;
 using MyApp.Models.Dto;
 using MyApp.Models.Entity;
@@ -31,6 +32,21 @@ namespace TestProject
             );
         }
 
+        private static TodoItem MakeTodo(
+            string? title = null,
+            string? content = null)
+        {
+            return new TodoItem
+            {
+                UserId = "U1",
+                TodoId = UlidGenerator.NewUlid(),
+                Title = title ?? "",
+                Content = content ?? "",
+                StatusCode = TodoStatus.Incomplete,
+                RemindTimestamp = null
+            };
+        }
+
         [Fact]
         public async Task CreateTodoAsync_ShouldAssignUlid_AndCallRepo()
         {
@@ -58,9 +74,9 @@ namespace TestProject
         {
             var todos = new List<TodoItem>
             {
-                new TodoItem { Title = "Buy milk" },
-                new TodoItem { Title = "Study C#" },
-                new TodoItem { Content = "Milk Tea recipe" }
+                MakeTodo(title: "Buy milk"),
+                MakeTodo(title: "Study C#"),
+                MakeTodo(content: "Milk Tea recipe")
             };
 
             _repoMock.Setup(r => r.GetAllTodosAsync("U1", null))
@@ -101,6 +117,8 @@ namespace TestProject
                      .Returns(Task.CompletedTask);
 
             var result = await _service.UpdateTodoAsync("U1", "T1", request);
+
+            Assert.NotNull(result);
 
             Assert.Equal("New Title", result.Title);
             Assert.Equal("Updated content", result.Content);

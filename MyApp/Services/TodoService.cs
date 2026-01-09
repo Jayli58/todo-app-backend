@@ -24,14 +24,13 @@ namespace MyApp.Services
             TodoItem todo = new TodoItem
             {
                 UserId = _currentUser.UserId,
+                // Generate a new ULID for the TodoId
+                TodoId = UlidGenerator.NewUlid(),
                 Title = request.Title,
                 Content = request.Content,
                 StatusCode = TodoStatus.Incomplete,
                 RemindTimestamp = null
             };
-
-            // Generate a new ULID for the TodoId
-            todo.TodoId = UlidGenerator.NewUlid();
 
             TodoItem insertedTodo = await _repo.AddTodoAsync(todo);
 
