@@ -1,4 +1,5 @@
-﻿using Amazon.DynamoDBv2;
+﻿using Amazon;
+using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using MyApp.Data.Repos;
 using MyApp.Services;
@@ -17,18 +18,33 @@ namespace MyApp.Extensions
             //Console.WriteLine("DynamoDB URL: " + dynamoUrl);
 
             // DynamoDB client
-            services.AddSingleton<IAmazonDynamoDB>(sp =>
+            services.AddSingleton<IAmazonDynamoDB>(_ =>
             {
-                return new AmazonDynamoDBClient(
-                    awsAccessKeyId: awsAccessKeyId,
-                    awsSecretAccessKey: awsSecretAccessKey,
-                    new AmazonDynamoDBConfig
+                // Local DynamoDB instance (e.g. localstack)
+                if (!string.IsNullOrEmpty(dynamoUrl))
+                {
+                    return new AmazonDynamoDBClient(
+                        awsAccessKeyId: awsAccessKeyId,
+                        awsSecretAccessKey: awsSecretAccessKey,
+                        new AmazonDynamoDBConfig
+                        {
+                            ServiceURL = dynamoUrl,
+                            AuthenticationRegion = region,
+                            UseHttp = true
+                        }
+                    );
+                }
+                // AWS DynamoDB service
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(region))
+                        throw new InvalidOperationException("Missing config: AWS:DynamoDB:Region");
+
+                    return new AmazonDynamoDBClient(new AmazonDynamoDBConfig
                     {
-                        ServiceURL = dynamoUrl,
-                        AuthenticationRegion = region,
-                        UseHttp = true
-                    }
-                );
+                        RegionEndpoint = RegionEndpoint.GetBySystemName(region),
+                    });
+                }
             });
 
             // DynamoDBContext wrapper

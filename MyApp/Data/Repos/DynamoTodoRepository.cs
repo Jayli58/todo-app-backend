@@ -21,22 +21,12 @@ namespace MyApp.Data.Repos
 
         public async Task<IEnumerable<TodoItem>> GetAllTodosAsync(string userId, TodoStatus? status)
         {
-            var conditions = new List<ScanCondition>();
+            // Query instead of Scan for better performance as we have the partition key (userId)
+            var todos = await _context.QueryAsync<TodoItem>(userId).GetRemainingAsync();
 
-            // Build scan conditions based on whether status is provided
-            if (status.HasValue)
-            {
-                conditions.Add(new ScanCondition("UserId", ScanOperator.Equal, userId));
-                conditions.Add(new ScanCondition("StatusCode", ScanOperator.Equal, status.Value));
-            }
-            else
-            {
-                conditions.Add(new ScanCondition("UserId", ScanOperator.Equal, userId));
-                // Exclude deleted items
-                conditions.Add(new ScanCondition("StatusCode", ScanOperator.In, TodoStatus.Incomplete, TodoStatus.Complete));
-            }
-
-            return await _context.ScanAsync<TodoItem>(conditions).GetRemainingAsync();
+            return status.HasValue
+                ? todos.Where(t => t.StatusCode == status.Value)
+                : todos.Where(t => t.StatusCode == TodoStatus.Incomplete || t.StatusCode == TodoStatus.Complete);
         }
 
         public async Task<TodoItem> AddTodoAsync(TodoItem todo)
