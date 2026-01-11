@@ -21,7 +21,7 @@ aws ses send-email `
 // list lambda functions to confirm local AWS setup
 aws lambda list-functions --endpoint-url http://localhost:4566 --profile localstack
         
-// zip lambda function code in powerhell
+// zip lambda function code in powerhell (need to publish to pub folder first; be aware .env should be included)
 Compress-Archive -Path .\pub\* -DestinationPath .\lambda.zip -Force
 
 // Deploy lambda function to local AWS (localstack)

@@ -16,7 +16,4 @@
     <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.4" />
     <PackageReference Include="AWSSDK.SimpleEmail" Version="4.0.2.9" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="pub\" />
-  </ItemGroup>
 </Project>
