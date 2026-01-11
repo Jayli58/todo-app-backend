@@ -49,11 +49,11 @@ public class Function
         context.Logger.LogInformation($"[Function] Received {dynamoEvent.Records.Count} stream records");
 
         // Log full event as JSON
-        var json = JsonSerializer.Serialize(dynamoEvent, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
-        context.Logger.LogInformation($"[Function] Dynamo db event JSON:\n{json}");
+        //var json = JsonSerializer.Serialize(dynamoEvent, new JsonSerializerOptions
+        //{
+        //    WriteIndented = true
+        //});
+        //context.Logger.LogInformation($"[Function] Dynamo db event JSON:\n{json}");
 
         await _handler.HandleAsync(dynamoEvent, context);
         context.Logger.LogInformation("[Function] Done processing reminder records");
