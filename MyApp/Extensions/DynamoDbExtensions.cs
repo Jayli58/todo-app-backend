@@ -18,6 +18,7 @@ namespace MyApp.Extensions
             //Console.WriteLine("DynamoDB URL: " + dynamoUrl);
 
             // DynamoDB client
+            // Runs once for the application lifetime, not per request
             services.AddSingleton<IAmazonDynamoDB>(_ =>
             {
                 // Local DynamoDB instance (e.g. localstack)

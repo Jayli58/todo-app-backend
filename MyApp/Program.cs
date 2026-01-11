@@ -2,8 +2,8 @@ using Amazon.DynamoDBv2;
 using MyApp.Exceptions;
 using MyApp.Extensions;
 using MyApp.Services;
-using Amazon.Lambda.AspNetCoreServer.Hosting;
-using Amazon.Lambda.AspNetCoreServer;
+//using Amazon.Lambda.AspNetCoreServer.Hosting;
+//using Amazon.Lambda.AspNetCoreServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
