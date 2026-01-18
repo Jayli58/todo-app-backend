@@ -15,4 +15,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\RemainderLambda\RemainderLambda.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\RemainderLambda\.env">
+	  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

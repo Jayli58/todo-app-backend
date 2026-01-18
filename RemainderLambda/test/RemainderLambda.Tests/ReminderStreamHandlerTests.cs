@@ -114,7 +114,7 @@ namespace RemainderLambda.Tests
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
             var dynamoEvent = serializer.Deserialize<DynamoDBEvent>(stream);
 
-            // Act — This should NOT throw due to try/catch inside handler
+            // This should not throw due to try/catch inside handler
             await handler.HandleAsync(dynamoEvent, context);
 
             // Assert
@@ -122,5 +122,47 @@ namespace RemainderLambda.Tests
             Assert.Contains("ERROR", logs);
             Assert.Contains("TODO-X", logs);
         }
+
+        [Fact]
+        public async Task HandleAsync_Allows_Empty_Content()
+        {
+            // Arrange
+            var json = @"
+            {
+              ""Records"": [
+                {
+                  ""eventName"": ""REMOVE"",
+                  ""dynamodb"": {
+                    ""OldImage"": {
+                      ""UserId"": { ""S"": ""USER-EMPTY"" },
+                      ""TodoId"": { ""S"": ""TODO-EMPTY"" },
+                      ""Email"": { ""S"": ""test@example.com"" },
+                      ""Title"": { ""S"": ""Test title"" },
+                      ""RemindAtEpoch"": { ""N"": ""1732885200"" }
+                    }
+                  }
+                }
+              ]
+            }";
+
+            var serializer = new DefaultLambdaJsonSerializer();
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            var dynamoEvent = serializer.Deserialize<DynamoDBEvent>(stream);
+
+            // Use a fake email service that records calls
+            var emailService = new FakeSuccessEmailService();
+            var handler = new ReminderStreamHandler(emailService);
+            var context = new TestLambdaContext();
+
+            // Act
+            await handler.HandleAsync(dynamoEvent, context);
+
+            // Assert
+            var logs = ((TestLambdaLogger)context.Logger).Buffer.ToString();
+
+            Assert.Contains("Processing TodoId=TODO-EMPTY", logs);
+            Assert.Contains("Email sent for TodoId=TODO-EMPTY", logs);
+        }
+
     }
 }

@@ -13,7 +13,7 @@ namespace RemainderLambda.Models
         public required string TodoId { get; set; }
         public required string Email { get; set; }
         public required string Title { get; set; }
-        public required string Content { get; set; }
+        public string? Content { get; set; }
         public long RemindAtEpoch { get; set; }
     }
 }

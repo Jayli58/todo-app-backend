@@ -3,6 +3,7 @@ using Amazon.Lambda.DynamoDBEvents;
 using Amazon.SimpleEmail.Model;
 using RemainderLambda.Models;
 using RemainderLambda.Services;
+using static Amazon.Lambda.DynamoDBEvents.DynamoDBEvent;
 
 
 namespace RemainderLambda.Handlers
@@ -44,12 +45,12 @@ namespace RemainderLambda.Handlers
 
             var reminder = new ReminderRecord
             {
-                // ReminderId = img["ReminderId"].S,
-                UserId = img["UserId"].S,
-                TodoId = img["TodoId"].S,
-                Email = img["Email"].S,
-                Title = img["Title"].S,
-                Content = img["Content"].S,
+                // content might be null
+                UserId = GetStringAttr(img, "UserId"),
+                TodoId = GetStringAttr(img, "TodoId"),
+                Email = GetStringAttr(img, "Email"),
+                Title = GetStringAttr(img, "Title"),
+                Content = GetStringAttr(img, "Content"),
                 RemindAtEpoch = long.Parse(img["RemindAtEpoch"].N)
             };
 
@@ -64,6 +65,17 @@ namespace RemainderLambda.Handlers
             context.Logger.LogInformation(
                 $"Email sent for TodoId={reminder.TodoId}, MessageId={messageId}"
             );
+        }
+
+        // Helper to get string attribute from DynamoDB image as content might be null
+        private static string GetStringAttr(
+            Dictionary<string, AttributeValue> image,
+            string key
+            )
+        {
+            if (image == null) return string.Empty;
+            // attributeValue.S -- DynamoDB string value
+            return image.TryGetValue(key, out var attributeValue) ? (attributeValue.S ?? string.Empty) : string.Empty;
         }
 
     }
