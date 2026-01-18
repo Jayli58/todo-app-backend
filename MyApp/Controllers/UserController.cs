@@ -8,7 +8,7 @@ using System.Security.Claims;
 namespace MyApp.Controllers
 {
     [Authorize]
-    [Route("api/me")]
+    [Route("me")]
     [ApiController]
     public class UserController : ControllerBase
     {

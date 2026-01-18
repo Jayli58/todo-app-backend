@@ -1,5 +1,6 @@
 ﻿using MyApp.Common;
 using MyApp.Data.Repos;
+using MyApp.Exceptions;
 using MyApp.Models.Dto;
 using MyApp.Models.Entity;
 using MyApp.Models.Enum;
@@ -12,6 +13,9 @@ namespace MyApp.Services
         private readonly IReminderRepository _repoReminder;
         private readonly ICurrentUser _currentUser;
 
+        private const int TITLE_MAX = 100;
+        private const int CONTENT_MAX = 200;
+
         public TodoService(ITodoRepository repo, IReminderRepository repoReminder, ICurrentUser currentUser)
         {
             _repo = repo;
@@ -21,6 +25,15 @@ namespace MyApp.Services
 
         public async Task<TodoItem> CreateTodoAsync(CreateTodoRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Title))
+                throw new BaseException("Title is required.");
+
+            if (request.Title.Length > TITLE_MAX)
+                throw new BaseException($"Title must be at most {TITLE_MAX} characters.");
+
+            if (request.Content != null && request.Content.Length > CONTENT_MAX)
+                throw new BaseException($"Content must be at most {CONTENT_MAX} characters.");
+
             TodoItem todo = new TodoItem
             {
                 UserId = _currentUser.UserId,

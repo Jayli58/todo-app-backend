@@ -10,7 +10,7 @@ namespace MyApp.Controllers
 {
     // Enforce authorization for all endpoints in this controller
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class TodoController : ControllerBase
     {

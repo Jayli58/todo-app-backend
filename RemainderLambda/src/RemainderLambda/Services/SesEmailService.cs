@@ -1,4 +1,5 @@
-﻿using Amazon.SimpleEmail;
+﻿using Amazon.Auth.AccessControlPolicy;
+using Amazon.SimpleEmail;
 using Amazon.SimpleEmail.Model;
 using System;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace RemainderLambda.Services
         )
         {
             _amazonSimpleEmailService = amazonSimpleEmailService;
-            _sender = sender;
+            _sender = $"Todo App <{sender}>";
         }
 
         public async Task<string> SendEmailAsync(string to, string subject, string body)
@@ -34,6 +35,8 @@ namespace RemainderLambda.Services
             //Console.WriteLine("===============================\n");
 
             //return Task.CompletedTask;
+
+            //Console.WriteLine($"[SES] Using sender(Source) = {_sender}");
 
             var response = await _amazonSimpleEmailService.SendEmailAsync(
                 new SendEmailRequest
