@@ -4,6 +4,8 @@ using Amazon.Lambda.TestUtilities;
 using Amazon.SimpleEmail;
 using RemainderLambda.Handlers;
 using RemainderLambda.Services;
+using RemainderLambda.Utils;
+using Resend;
 using System.Text;
 using Xunit;
 
@@ -54,8 +56,8 @@ namespace RemainderLambda.Tests
             //var serviceUrl = Environment.GetEnvironmentVariable("SES_SERVICE_URL");
             var serviceUrl = LocalstackEndpointResolver.ResolveSesServiceUrl();
             var authRegion = Environment.GetEnvironmentVariable("SES_AUTH_REGION");
-            var sender = Environment.GetEnvironmentVariable("SES_SENDER")
-                         ?? throw new InvalidOperationException("Missing SES_SENDER");
+            var sender = Environment.GetEnvironmentVariable("MAIL_SENDER")
+                         ?? throw new InvalidOperationException("Missing MAIL_SENDER");
 
             var sesConfig = new AmazonSimpleEmailServiceConfig
             {
@@ -162,6 +164,77 @@ namespace RemainderLambda.Tests
 
             Assert.Contains("Processing TodoId=TODO-EMPTY", logs);
             Assert.Contains("Email sent for TodoId=TODO-EMPTY", logs);
+        }
+
+        // test with Resend email service; needs real API key and domain verified
+        [Fact]
+        public async Task Test_ReminderStreamHandler_Processes_Remove_Event_Resend()
+        {
+            // Create Resend client using environment variables for configuration
+            EnvLoader.LoadDotEnv();
+            var to = Environment.GetEnvironmentVariable("TEST_MAIL_RECEIVER") 
+                ?? throw new InvalidOperationException("Missing TEST_MAIL_RECEIVER"); ;
+
+            // Arrange the DynamoDB REMOVE event JSON
+            var json = $@"
+            {{
+              ""Records"": [
+                {{
+                  ""eventID"": ""1"",
+                  ""eventName"": ""REMOVE"",
+                  ""eventVersion"": ""1.1"",
+                  ""eventSource"": ""aws:dynamodb"",
+                  ""awsRegion"": ""ap-southeast-2"",
+                  ""dynamodb"": {{
+                    ""Keys"": {{
+                      ""UserId"": {{ ""S"": ""USER-1"" }},
+                      ""TodoId"": {{ ""S"": ""TODO-1"" }}
+                    }},
+                    ""OldImage"": {{
+                      ""UserId"": {{ ""S"": ""USER-1"" }},
+                      ""TodoId"": {{ ""S"": ""TODO-1"" }},
+                      ""Email"": {{ ""S"": ""{to}"" }},
+                      ""Title"": {{ ""S"": ""Buy milk"" }},
+                      ""Content"": {{ ""S"": ""Remember to buy milk"" }},
+                      ""RemindAtEpoch"": {{ ""N"": ""1732885200"" }}
+                    }}
+                  }}
+                }}
+              ]
+            }}";
+
+
+            // Deserialize JSON → DynamoDBEvent
+            var serializer = new DefaultLambdaJsonSerializer();
+            var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            var dynamoEvent = serializer.Deserialize<DynamoDBEvent>(stream);            
+
+            var sender = Environment.GetEnvironmentVariable("MAIL_SENDER")
+            ?? throw new InvalidOperationException("Missing MAIL_SENDER");
+
+            var apiKey = ResendApiKeyResolver.ResolveResendApiKey();
+
+            var options = new ResendClientOptions()
+            {
+                ApiToken = apiKey
+            };
+
+            var resend = ResendClient.Create(options);
+
+            var handler = new ReminderStreamHandler(new ResendEmailService(resend, sender));
+            var context = new TestLambdaContext();
+
+            // Act
+            await handler.HandleAsync(dynamoEvent, context);
+
+            // Get logs
+            var logs = ((TestLambdaLogger)context.Logger).Buffer.ToString();
+            Console.WriteLine(logs);
+
+            // Assert
+            Assert.Contains("Processing TodoId=TODO-1", logs);
+            // check if email was "sent"
+            Assert.Contains("Email sent for TodoId", logs);
         }
 
     }

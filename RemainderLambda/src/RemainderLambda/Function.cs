@@ -1,8 +1,13 @@
 using Amazon.Lambda.Core;
 using Amazon.Lambda.DynamoDBEvents;
+using Amazon.Runtime;
 using Amazon.SimpleEmail;
+using Amazon.SimpleSystemsManagement;
+using Amazon.SimpleSystemsManagement.Model;
 using RemainderLambda.Handlers;
 using RemainderLambda.Services;
+using RemainderLambda.Utils;
+using Resend;
 using System.Text.Json;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -14,33 +19,53 @@ public class Function
 {
     private readonly ReminderStreamHandler _handler;
 
+    // with SES
+    //public Function()
+    //{
+    //    // Create SES client using environment variables for configuration
+    //    EnvLoader.LoadDotEnv();
+
+    //    var serviceUrl = LocalstackEndpointResolver.ResolveSesServiceUrl();
+    //    var sender = Environment.GetEnvironmentVariable("SES_SENDER")
+    //                 ?? throw new InvalidOperationException("Missing SES_SENDER");
+
+    //    var sesConfig = new AmazonSimpleEmailServiceConfig();
+
+    //    // LocalStack mode
+    //    if (!string.IsNullOrWhiteSpace(serviceUrl))
+    //    {
+    //        var authRegion = Environment.GetEnvironmentVariable("SES_AUTH_REGION")
+    //                         ?? "ap-southeast-2";
+
+    //        sesConfig.ServiceURL = serviceUrl;
+    //        sesConfig.UseHttp = true;
+    //        sesConfig.AuthenticationRegion = authRegion;
+    //    }
+    //    // else: AWS mode (real SES endpoint, no ServiceURL/UseHttp needed)
+
+    //    var sesClient = new AmazonSimpleEmailServiceClient(sesConfig);
+
+    //    // Initialize the handler with the SES email service as entry point
+    //    _handler = new ReminderStreamHandler(new SesEmailService(sesClient, sender));
+    //}
+
+    // with Resend
     public Function()
     {
-        // Create SES client using environment variables for configuration
-        EnvLoader.LoadDotEnv();
+        var sender = Environment.GetEnvironmentVariable("MAIL_SENDER") 
+            ?? throw new InvalidOperationException("Missing MAIL_SENDER");
 
-        var serviceUrl = LocalstackEndpointResolver.ResolveSesServiceUrl();
-        var sender = Environment.GetEnvironmentVariable("SES_SENDER")
-                     ?? throw new InvalidOperationException("Missing SES_SENDER");
+        var apiKey = ResendApiKeyResolver.ResolveResendApiKey();
 
-        var sesConfig = new AmazonSimpleEmailServiceConfig();
-        
-        // LocalStack mode
-        if (!string.IsNullOrWhiteSpace(serviceUrl))
+        var options = new ResendClientOptions()
         {
-            var authRegion = Environment.GetEnvironmentVariable("SES_AUTH_REGION")
-                             ?? "ap-southeast-2";
+            ApiToken = apiKey
+        };
 
-            sesConfig.ServiceURL = serviceUrl;
-            sesConfig.UseHttp = true;
-            sesConfig.AuthenticationRegion = authRegion;
-        }
-        // else: AWS mode (real SES endpoint, no ServiceURL/UseHttp needed)
-
-        var sesClient = new AmazonSimpleEmailServiceClient(sesConfig);
+        var resend = ResendClient.Create(options);
 
         // Initialize the handler with the SES email service as entry point
-        _handler = new ReminderStreamHandler(new SesEmailService(sesClient, sender));
+        _handler = new ReminderStreamHandler(new ResendEmailService(resend, sender));
     }
 
     // Lambda entrypoint
