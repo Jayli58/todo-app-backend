@@ -26,11 +26,14 @@ namespace RemainderLambda.Services
 
         public async Task<string> SendEmailAsync(string to, string subject, string body)
         {
+            // Resend API does not accept empty body
+            var safeBody = string.IsNullOrWhiteSpace(body) ? "No content." : body;
+
             var msg = new EmailMessage();
             msg.From = _sender;
             msg.To.Add(to);
             msg.Subject = subject;
-            msg.TextBody = body;
+            msg.TextBody = safeBody;
 
             var response = await _resend.EmailSendAsync(msg);
 
