@@ -72,7 +72,7 @@ namespace MyApp.Controllers
         {
             // validate timestamp
             if (request.RemindAtEpoch <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                return BadRequest("Reminder time must be in the future.");
+                throw new ReminderTimeInPastException();
 
             bool flag = await _todoService.SetRemainderAsync(_currentUser.UserId, todoId, request.RemindAtEpoch);
             if (!flag) throw new TodoNotFoundException();
