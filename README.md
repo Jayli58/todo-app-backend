@@ -95,6 +95,15 @@ Local development example:
     "Url": "http://localhost:3000"
   }
 }
+ app```
+
+RemainderLambda local `.env` example:
+```
+SES_AUTH_REGION=ap-southeast-2
+MAIL_SENDER=YOUR_MAIL_ADDRESS
+USE_LOCALSTACK=true
+RESEND_API_KEY=YOUR_API_KEY
+TEST_MAIL_RECEIVER=YOUR_MAIL_ADDRESS
 ```
 
 > **Note**: For local development, this project leverages **LocalStack** to simulate AWS services. This allows you to run **DynamoDB** (including Streams and TTL triggers) and **SES** locally without connecting to the real AWS cloud. The configuration and setup scripts for LocalStack (including **initial DB tables creation**) are located in the `MyApp/local-aws` directory. For email delivery, both SES and Resend were prepared; Resend is the deployed option in `RemainderLambda` because SES production approval is difficult to obtain.
