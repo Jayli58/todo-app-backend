@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace RemainderLambda.Services
 {
+    // Two mail-sending options were prepared (SES and Resend). Resend is the
+    // deployed choice in RemainderLambda because SES production approval is
+    // difficult to obtain.
     public class SesEmailService : IEmailService
     {
         private readonly IAmazonSimpleEmailService _amazonSimpleEmailService;
