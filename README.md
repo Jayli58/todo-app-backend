@@ -95,7 +95,7 @@ Local development example:
     "Url": "http://localhost:3000"
   }
 }
- app```
+```
 
 RemainderLambda local `.env` example:
 ```
