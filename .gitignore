@@ -362,6 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /RemainderLambda/src/RemainderLambda/.env
+/RemainderLambda/src/RemainderLambda/lambda.zip
 MyApp/appsettings.Development.json
 MyApp/appsettings.json
 MyApp/local-aws/localstack/cache/
