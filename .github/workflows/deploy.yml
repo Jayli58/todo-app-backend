@@ -35,6 +35,7 @@ jobs:
       - name: Publish RemainderLambda
         run: dotnet publish RemainderLambda/src/RemainderLambda/RemainderLambda.csproj -c Release -o RemainderLambda/bin/lambda-publish
 
+      # put together the published artifacts into a zip file
       - name: Package backend source
         run: zip -r ${{ env.S3_KEY }} MyApp/bin/lambda-publish RemainderLambda/bin/lambda-publish
 
