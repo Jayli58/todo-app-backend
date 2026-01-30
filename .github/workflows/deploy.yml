@@ -45,4 +45,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Upload package to S3
-        run: aws s3 cp ${{ env.S3_KEY }} s3://${{ secrets.PIPELINE_SOURCE_BUCKET }}/${{ env.S3_KEY }}
+        run: aws s3 cp ${{ env.S3_KEY }} s3://${{ vars.PIPELINE_SOURCE_BUCKET }}/${{ env.S3_KEY }}
