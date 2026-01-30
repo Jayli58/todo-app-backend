@@ -1,0 +1,48 @@
+name: Deploy Backend Artifacts
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  DOTNET_VERSION: "8.0.x"
+  S3_KEY: ${{ vars.PIPELINE_BACKEND_KEY }}
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish MyApp
+        run: dotnet publish MyApp/MyApp.csproj -c Release -o MyApp/bin/lambda-publish
+
+      - name: Publish RemainderLambda
+        run: dotnet publish RemainderLambda/src/RemainderLambda/RemainderLambda.csproj -c Release -o RemainderLambda/bin/lambda-publish
+
+      - name: Package backend source
+        run: zip -r ${{ env.S3_KEY }} MyApp/bin/lambda-publish RemainderLambda/bin/lambda-publish
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload package to S3
+        run: aws s3 cp ${{ env.S3_KEY }} s3://${{ secrets.PIPELINE_SOURCE_BUCKET }}/${{ env.S3_KEY }}
