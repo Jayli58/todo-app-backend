@@ -29,11 +29,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Run TestProject tests
+        run: dotnet test TestProject/TestProject.csproj -c Release --no-restore
+
       - name: Publish MyApp
-        run: dotnet publish MyApp/MyApp.csproj -c Release -o MyApp/bin/lambda-publish
+        run: dotnet publish MyApp/MyApp.csproj -c Release -o MyApp/bin/lambda-publish --no-restore
 
       - name: Publish RemainderLambda
-        run: dotnet publish RemainderLambda/src/RemainderLambda/RemainderLambda.csproj -c Release -o RemainderLambda/bin/lambda-publish
+        run: dotnet publish RemainderLambda/src/RemainderLambda/RemainderLambda.csproj -c Release -o RemainderLambda/bin/lambda-publish --no-restore
 
       # put together the published artifacts into a zip file
       - name: Package backend source
