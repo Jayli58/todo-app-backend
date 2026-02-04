@@ -62,32 +62,34 @@ namespace MyApp.Services
             return todo;
         }
 
-        public async Task<IEnumerable<TodoItem>> GetTodosAsync(string userId, TodoStatus? status)
+        public async Task<(IEnumerable<TodoItem> Items, string? NextToken)> GetTodosAsync(
+            string userId,
+            TodoStatus? status,
+            int limit,
+            string? paginationToken)
         {
-            IEnumerable<TodoItem> allTodos = await _repo.GetAllTodosAsync(userId, status);
-
-            // Return todos ordered by TodoId in descending order (newest first)
-            return allTodos.OrderByDescending(t => t.TodoId);
-        }
-
-        public async Task<IEnumerable<TodoItem>> SearchTodosAsync(string userId, string? query)
-        {
-            IEnumerable<TodoItem> allTodos = await _repo.GetAllTodosAsync(userId, null);
-
-            if (string.IsNullOrWhiteSpace(query))
+            int safeLimit = Math.Max(0, limit);
+            if (safeLimit == 0)
             {
-                // descending order (newest first)
-                return allTodos.OrderByDescending(t => t.TodoId);
+                return (Array.Empty<TodoItem>(), null);
             }
 
-            query = query.ToLowerInvariant().Trim();
+            return await _repo.QueryTodosPageAsync(userId, status, safeLimit, paginationToken);
+        }
 
-            // Filter todos where Title or Content contains the query string (case-insensitive)
-            // descending order (newest first)
-            return allTodos.Where(todo =>
-                (todo.Title != null && todo.Title.ToLowerInvariant().Contains(query)) ||
-                (todo.Content != null && todo.Content.ToLowerInvariant().Contains(query))
-            ).OrderByDescending(t => t.TodoId);
+        public async Task<(IEnumerable<TodoItem> Items, string? NextToken)> SearchTodosAsync(
+            string userId,
+            string? query,
+            int limit,
+            string? paginationToken)
+        {
+            int safeLimit = Math.Max(0, limit);
+            if (safeLimit == 0)
+            {
+                return (Array.Empty<TodoItem>(), null);
+            }
+
+            return await _repo.SearchTodosPageAsync(userId, query, safeLimit, paginationToken);
         }
 
         public async Task<bool> SetRemainderAsync(string userId, string todoId, long remindTimestamp)

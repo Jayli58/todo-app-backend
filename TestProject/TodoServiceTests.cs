@@ -47,6 +47,7 @@ namespace TestProject
             };
         }
 
+
         [Fact]
         public async Task CreateTodoAsync_ShouldAssignUlid_AndCallRepo()
         {
@@ -79,14 +80,20 @@ namespace TestProject
                 MakeTodo(content: "Milk Tea recipe")
             };
 
-            _repoMock.Setup(r => r.GetAllTodosAsync("U1", null))
-                     .ReturnsAsync(todos);
+            var matching = new List<TodoItem>
+            {
+                todos[0],
+                todos[2]
+            };
 
-            var results = await _service.SearchTodosAsync("U1", "milk");
+            _repoMock.Setup(r => r.SearchTodosPageAsync("U1", "milk", 10, null))
+                     .ReturnsAsync((matching, null));
 
-            Assert.Equal(2, results.Count());
-            Assert.Contains(results, t => t.Title == "Buy milk");
-            Assert.Contains(results, t => t.Content == "Milk Tea recipe");
+            var results = await _service.SearchTodosAsync("U1", "milk", 10, null);
+
+            Assert.Equal(2, results.Items.Count());
+            Assert.Contains(results.Items, t => t.Title == "Buy milk");
+            Assert.Contains(results.Items, t => t.Content == "Milk Tea recipe");
         }
 
         [Fact]

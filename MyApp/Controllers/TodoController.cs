@@ -24,10 +24,18 @@ namespace MyApp.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodos(TodoStatus? status)
+        public async Task<ActionResult<IEnumerable<TodoItem>>> GetTodos(
+            TodoStatus? status,
+            int limit = 10,
+            string? lastKey = null)
         {
-            IEnumerable<TodoItem> todos = await _todoService.GetTodosAsync(_currentUser.UserId, status);
-            return Ok(todos);
+            var result = await _todoService.GetTodosAsync(_currentUser.UserId, status, limit, lastKey);
+            if (!string.IsNullOrWhiteSpace(result.NextToken))
+            {
+                Response.Headers["X-Next-Page-Key"] = result.NextToken;
+            }
+
+            return Ok(result.Items);
         }
 
         [HttpGet("{todoId}")]
@@ -61,10 +69,18 @@ namespace MyApp.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<TodoItem>>> SearchTodos(string? query)
+        public async Task<ActionResult<IEnumerable<TodoItem>>> SearchTodos(
+            string? query,
+            int limit = 10,
+            string? lastKey = null)
         {
-            IEnumerable<TodoItem> todos = await _todoService.SearchTodosAsync(_currentUser.UserId, query);
-            return Ok(todos);
+            var result = await _todoService.SearchTodosAsync(_currentUser.UserId, query, limit, lastKey);
+            if (!string.IsNullOrWhiteSpace(result.NextToken))
+            {
+                Response.Headers["X-Next-Page-Key"] = result.NextToken;
+            }
+
+            return Ok(result.Items);
         }
 
         [HttpPut("{todoId}/reminder")]

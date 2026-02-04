@@ -21,4 +21,11 @@
     <PackageReference Include="Ulid" Version="1.4.1" />
   </ItemGroup>
 
+  <!-- Allow TestProject to access internal members -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>TestProject</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,9 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
+using System.Linq;
+using MyApp.Data.Dynamo;
 using MyApp.Models.Entity;
 using MyApp.Models.Enum;
 
@@ -7,10 +11,13 @@ namespace MyApp.Data.Repos
 {
     public class DynamoTodoRepository : ITodoRepository
     {
+        private const string TableName = "Todos";
+        private readonly IAmazonDynamoDB _client;
         private readonly IDynamoDBContext _context;
 
-        public DynamoTodoRepository(IDynamoDBContext context)
+        public DynamoTodoRepository(IAmazonDynamoDB client, IDynamoDBContext context)
         {
+            _client = client;
             _context = context;
         }
 
@@ -19,14 +26,94 @@ namespace MyApp.Data.Repos
             return await _context.LoadAsync<TodoItem>(userId, todoId);
         }
 
-        public async Task<IEnumerable<TodoItem>> GetAllTodosAsync(string userId, TodoStatus? status)
+        public async Task<(IEnumerable<TodoItem> Items, string? NextToken)> QueryTodosPageAsync(
+            string userId,
+            TodoStatus? status,
+            int limit,
+            string? paginationToken)
         {
-            // Query instead of Scan for better performance as we have the partition key (userId)
-            var todos = await _context.QueryAsync<TodoItem>(userId).GetRemainingAsync();
+            // return a filter expression and bound values
+            var (filterExpression, values) = BuildStatusFilter(status);
+            return await QueryPageAsync(userId, filterExpression, values, limit, paginationToken);
+        }
 
-            return status.HasValue
-                ? todos.Where(t => t.StatusCode == status.Value)
-                : todos.Where(t => t.StatusCode == TodoStatus.Incomplete || t.StatusCode == TodoStatus.Complete);
+        public async Task<(IEnumerable<TodoItem> Items, string? NextToken)> SearchTodosPageAsync(
+            string userId,
+            string? query,
+            int limit,
+            string? paginationToken)
+        {
+            // if query is empty, return all todos
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return await QueryTodosPageAsync(userId, null, limit, paginationToken);
+            }
+
+            var values = new Dictionary<string, AttributeValue>
+            {
+                [":query"] = new AttributeValue { S = query.Trim() },
+                [":incomplete"] = new AttributeValue { N = ((int)TodoStatus.Incomplete).ToString() },
+                [":complete"] = new AttributeValue { N = ((int)TodoStatus.Complete).ToString() }
+            };
+
+            const string filterExpression =
+                "(contains(Title, :query) OR contains(Content, :query)) AND " +
+                "(StatusCode = :incomplete OR StatusCode = :complete)";
+
+            return await QueryPageAsync(userId, filterExpression, values, limit, paginationToken);
+        }
+
+        // Query DynamoDB for todo items with optional filter
+        private async Task<(IEnumerable<TodoItem> Items, string? NextToken)> QueryPageAsync(
+            string userId,
+            string filterExpression,
+            Dictionary<string, AttributeValue> values,
+            int limit,
+            string? paginationToken)
+        {
+            QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
+                TableName,
+                userId,
+                filterExpression,
+                values,
+                limit,
+                paginationToken,
+                scanIndexForward: false);
+
+            QueryResponse response = await _client.QueryAsync(request);
+            var items = response.Items
+                .Select(item => _context.FromDocument<TodoItem>(Document.FromAttributeMap(item)))
+                .ToList();
+
+            string? nextToken = DynamoQueryHelper.EncodePaginationToken(response.LastEvaluatedKey);
+            return (items, nextToken);
+        }
+
+        // Build filter expression and values for status
+        internal static (string FilterExpression, Dictionary<string, AttributeValue> Values) BuildStatusFilter(
+            TodoStatus? status)
+        {
+            if (status.HasValue)
+            {
+                // return expression with given status
+                return (
+                    "StatusCode = :status",
+                    new Dictionary<string, AttributeValue>
+                    {
+                        [":status"] = new AttributeValue { N = ((int)status.Value).ToString() }
+                    }
+                );
+            }
+
+            // return expression with all status
+            return (
+                "StatusCode = :incomplete OR StatusCode = :complete",
+                new Dictionary<string, AttributeValue>
+                {
+                    [":incomplete"] = new AttributeValue { N = ((int)TodoStatus.Incomplete).ToString() },
+                    [":complete"] = new AttributeValue { N = ((int)TodoStatus.Complete).ToString() }
+                }
+            );
         }
 
         public async Task<TodoItem> AddTodoAsync(TodoItem todo)

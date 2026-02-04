@@ -27,6 +27,8 @@
                         .WithOrigins(allowedOrigins)
                         .AllowAnyHeader()
                         .AllowAnyMethod()
+                        // Expose the pagination token to the frontend
+                        .WithExposedHeaders("X-Next-Page-Key")
                         .AllowCredentials();
                 });
             });

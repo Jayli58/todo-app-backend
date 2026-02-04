@@ -6,7 +6,11 @@ namespace MyApp.Services
 {
     public interface ITodoService
     {
-        Task<IEnumerable<TodoItem>> SearchTodosAsync(string userId, string? query);
+        Task<(IEnumerable<TodoItem> Items, string? NextToken)> SearchTodosAsync(
+            string userId,
+            string? query,
+            int limit,
+            string? paginationToken);
 
         Task<TodoItem> GetTodoAsync(string userId, string todoId);
 
@@ -16,7 +20,11 @@ namespace MyApp.Services
 
         Task<bool> DeleteTodoAsync(string userId, string todoId);
 
-        Task<IEnumerable<TodoItem>> GetTodosAsync(string userId, TodoStatus? status);
+        Task<(IEnumerable<TodoItem> Items, string? NextToken)> GetTodosAsync(
+            string userId,
+            TodoStatus? status,
+            int limit,
+            string? paginationToken);
 
         Task<bool> SetRemainderAsync(string userId, string todoId, long RemindTimestamp);
     }
