@@ -366,3 +366,4 @@ FodyWeavers.xsd
 MyApp/appsettings.Development.json
 MyApp/appsettings.json
 MyApp/local-aws/localstack/cache/
+/MyApp/appsettings.Development.json
