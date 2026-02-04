@@ -71,21 +71,33 @@ namespace MyApp.Data.Repos
             int limit,
             string? paginationToken)
         {
-            QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
-                TableName,
-                userId,
-                filterExpression,
-                values,
-                limit,
-                paginationToken,
-                scanIndexForward: false);
+            string? nextToken = paginationToken;
+            List<TodoItem> items = new();
+            Dictionary<string, AttributeValue>? lastEvaluatedKey;
 
-            QueryResponse response = await _client.QueryAsync(request);
-            var items = response.Items
-                .Select(item => _context.FromDocument<TodoItem>(Document.FromAttributeMap(item)))
-                .ToList();
+            do
+            {
+                QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
+                    TableName,
+                    userId,
+                    filterExpression,
+                    values,
+                    limit,
+                    nextToken,
+                    scanIndexForward: false);
 
-            string? nextToken = DynamoQueryHelper.EncodePaginationToken(response.LastEvaluatedKey);
+                QueryResponse response = await _client.QueryAsync(request);
+                items = response.Items
+                    .Select(item => _context.FromDocument<TodoItem>(Document.FromAttributeMap(item)))
+                    .ToList();
+
+                lastEvaluatedKey = response.LastEvaluatedKey;
+                nextToken = DynamoQueryHelper.EncodePaginationToken(lastEvaluatedKey);
+            }
+            // dynamodb returns LastEvaluatedKey based on items it scanned, not on items that passed the filter
+            // so we need to keep querying until we find at least one matching item or reach the end
+            while (items.Count == 0 && lastEvaluatedKey != null && lastEvaluatedKey.Count > 0);
+
             return (items, nextToken);
         }
 
