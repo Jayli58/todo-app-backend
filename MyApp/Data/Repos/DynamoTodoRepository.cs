@@ -32,9 +32,10 @@ namespace MyApp.Data.Repos
             int limit,
             string? paginationToken)
         {
-            // return a filter expression and bound values
-            var (filterExpression, values) = BuildStatusFilter(status);
-            return await QueryPageAsync(userId, filterExpression, values, limit, paginationToken);
+            // return a key condition expression and bound values
+            var (keyConditionExpression, values) = BuildStatusKeyCondition(status);
+            // no need to pass filterExpression as status is part of the key
+            return await QueryPageAsync(userId, keyConditionExpression, null, values, limit, paginationToken);
         }
 
         public async Task<(IEnumerable<TodoItem> Items, string? NextToken)> SearchTodosPageAsync(
@@ -51,22 +52,27 @@ namespace MyApp.Data.Repos
 
             var values = new Dictionary<string, AttributeValue>
             {
-                [":query"] = new AttributeValue { S = query.Trim() },
-                [":incomplete"] = new AttributeValue { N = ((int)TodoStatus.Incomplete).ToString() },
-                [":complete"] = new AttributeValue { N = ((int)TodoStatus.Complete).ToString() }
+                [":query"] = new AttributeValue { S = query.Trim() }
             };
 
             const string filterExpression =
-                "(contains(Title, :query) OR contains(Content, :query)) AND " +
-                "(StatusCode = :incomplete OR StatusCode = :complete)";
+                "contains(Title, :query) OR contains(Content, :query)";
 
-            return await QueryPageAsync(userId, filterExpression, values, limit, paginationToken);
+            var (keyConditionExpression, keyValues) = BuildStatusKeyCondition(null);
+            foreach (var kvp in values)
+            {
+                keyValues[kvp.Key] = kvp.Value;
+            }
+
+            return await QueryPageAsync(userId, keyConditionExpression, filterExpression, keyValues, limit, paginationToken);
         }
 
         // Query DynamoDB for todo items with optional filter
         private async Task<(IEnumerable<TodoItem> Items, string? NextToken)> QueryPageAsync(
             string userId,
-            string filterExpression,
+            // keyConditionExpression can be "UserId = :userId" or "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd"
+            string keyConditionExpression,
+            string? filterExpression,
             Dictionary<string, AttributeValue> values,
             int limit,
             string? paginationToken)
@@ -75,55 +81,63 @@ namespace MyApp.Data.Repos
             List<TodoItem> items = new();
             Dictionary<string, AttributeValue>? lastEvaluatedKey;
 
+            // GSI + filterExpression could still return fewer than limit items
+            // dynamodb returns LastEvaluatedKey based on items it scanned, not on items that passed the filter
+            // so we need to keep querying until we reach the requested limit or the end
             do
             {
                 QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
                     TableName,
                     userId,
+                    keyConditionExpression,
                     filterExpression,
                     values,
-                    limit,
+                    limit - items.Count,
                     nextToken,
-                    scanIndexForward: false);
+                    scanIndexForward: false,
+                    indexName: "UserIdStatusTodoId");
 
                 QueryResponse response = await _client.QueryAsync(request);
-                items = response.Items
+                items.AddRange(response.Items
                     .Select(item => _context.FromDocument<TodoItem>(Document.FromAttributeMap(item)))
-                    .ToList();
+                    .ToList());
 
                 lastEvaluatedKey = response.LastEvaluatedKey;
                 nextToken = DynamoQueryHelper.EncodePaginationToken(lastEvaluatedKey);
             }
             // dynamodb returns LastEvaluatedKey based on items it scanned, not on items that passed the filter
-            // so we need to keep querying until we find at least one matching item or reach the end
-            while (items.Count == 0 && lastEvaluatedKey != null && lastEvaluatedKey.Count > 0);
+            // so we need to keep querying until we reach the requested limit or the end
+            while (items.Count < limit && lastEvaluatedKey != null && lastEvaluatedKey.Count > 0);
 
             return (items, nextToken);
         }
 
-        // Build filter expression and values for status
-        internal static (string FilterExpression, Dictionary<string, AttributeValue> Values) BuildStatusFilter(
+        // Build key condition expression and values for status
+        internal static (string KeyConditionExpression, Dictionary<string, AttributeValue> Values) BuildStatusKeyCondition(
             TodoStatus? status)
         {
             if (status.HasValue)
             {
+                // convert enum to string with at least 1 digit
+                string statusPrefix = ((int)status.Value).ToString("D1") + "#";
                 // return expression with given status
                 return (
-                    "StatusCode = :status",
+                    "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
                     new Dictionary<string, AttributeValue>
                     {
-                        [":status"] = new AttributeValue { N = ((int)status.Value).ToString() }
+                        [":statusStart"] = new AttributeValue { S = statusPrefix },
+                        [":statusEnd"] = new AttributeValue { S = statusPrefix + "~" }
                     }
                 );
             }
 
-            // return expression with all status
+            // return expression with all non-deleted status
             return (
-                "StatusCode = :incomplete OR StatusCode = :complete",
+                "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
                 new Dictionary<string, AttributeValue>
                 {
-                    [":incomplete"] = new AttributeValue { N = ((int)TodoStatus.Incomplete).ToString() },
-                    [":complete"] = new AttributeValue { N = ((int)TodoStatus.Complete).ToString() }
+                    [":statusStart"] = new AttributeValue { S = ((int)TodoStatus.Incomplete).ToString("D1") + "#" },
+                    [":statusEnd"] = new AttributeValue { S = ((int)TodoStatus.Complete).ToString("D1") + "#~" }
                 }
             );
         }
@@ -160,6 +174,8 @@ namespace MyApp.Data.Repos
             if (todo == null) return false;
 
             todo.StatusCode = TodoStatus.Deleted; // 3
+            // Update StatusTodoId for GSI query; D1 is for single digit
+            todo.StatusTodoId = $"{(int)todo.StatusCode:D1}#{todo.TodoId}";
             await _context.SaveAsync(todo);
             return true;
         }

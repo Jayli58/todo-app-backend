@@ -45,6 +45,9 @@ namespace MyApp.Services
                 RemindTimestamp = null
             };
 
+            // Update StatusTodoId for GSI query; D1 is for single digit
+            todo.StatusTodoId = $"{(int)todo.StatusCode:D1}#{todo.TodoId}";
+
             TodoItem insertedTodo = await _repo.AddTodoAsync(todo);
 
             return insertedTodo;
@@ -142,7 +145,11 @@ namespace MyApp.Services
                 existing.Content = request.Content;
 
             if (request.StatusCode.HasValue)
+            {
                 existing.StatusCode = request.StatusCode.Value;
+                // Update StatusTodoId for GSI query; D1 is for single digit
+                existing.StatusTodoId = $"{(int)existing.StatusCode:D1}#{existing.TodoId}";
+            }
 
             if (request.RemindTimestamp.HasValue)
                 existing.RemindTimestamp = request.RemindTimestamp.Value;

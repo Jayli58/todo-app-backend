@@ -12,31 +12,37 @@ namespace TestProject
     public class DynamoTodoRepositoryTests
     {
         [Fact]
-        public void BuildStatusFilter_WithStatus_ReturnsStatusExpression()
+        public void BuildStatusKeyCondition_WithStatus_ReturnsStatusExpression()
         {
-            var result = DynamoTodoRepository.BuildStatusFilter(TodoStatus.Complete);
+            var result = DynamoTodoRepository.BuildStatusKeyCondition(TodoStatus.Complete);
 
-            Assert.Equal("StatusCode = :status", result.FilterExpression);
-            Assert.True(result.Values.ContainsKey(":status"));
             Assert.Equal(
-                ((int)TodoStatus.Complete).ToString(),
-                result.Values[":status"].N);
+                "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
+                result.KeyConditionExpression);
+            Assert.True(result.Values.ContainsKey(":statusStart"));
+            Assert.True(result.Values.ContainsKey(":statusEnd"));
+            Assert.Equal(
+                ((int)TodoStatus.Complete).ToString("D1") + "#",
+                result.Values[":statusStart"].S);
+            Assert.Equal(
+                ((int)TodoStatus.Complete).ToString("D1") + "#~",
+                result.Values[":statusEnd"].S);
         }
 
         [Fact]
-        public void BuildStatusFilter_NoStatus_ReturnsDefaultExpression()
+        public void BuildStatusKeyCondition_NoStatus_ReturnsDefaultExpression()
         {
-            var result = DynamoTodoRepository.BuildStatusFilter(null);
+            var result = DynamoTodoRepository.BuildStatusKeyCondition(null);
 
             Assert.Equal(
-                "StatusCode = :incomplete OR StatusCode = :complete",
-                result.FilterExpression);
+                "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
+                result.KeyConditionExpression);
             Assert.Equal(
-                ((int)TodoStatus.Incomplete).ToString(),
-                result.Values[":incomplete"].N);
+                ((int)TodoStatus.Incomplete).ToString("D1") + "#",
+                result.Values[":statusStart"].S);
             Assert.Equal(
-                ((int)TodoStatus.Complete).ToString(),
-                result.Values[":complete"].N);
+                ((int)TodoStatus.Complete).ToString("D1") + "#~",
+                result.Values[":statusEnd"].S);
         }
 
         [Fact]

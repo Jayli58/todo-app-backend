@@ -36,14 +36,16 @@ namespace TestProject
             string? title = null,
             string? content = null)
         {
+            string todoId = UlidGenerator.NewUlid();
             return new TodoItem
             {
                 UserId = "U1",
-                TodoId = UlidGenerator.NewUlid(),
+                TodoId = todoId,
                 Title = title ?? "",
                 Content = content ?? "",
                 StatusCode = TodoStatus.Incomplete,
-                RemindTimestamp = null
+                RemindTimestamp = null,
+                StatusTodoId = $"{(int)TodoStatus.Incomplete:D1}#{todoId}"
             };
         }
 
@@ -105,7 +107,8 @@ namespace TestProject
                 TodoId = "T1",
                 Title = "Old",
                 Content = "Old content",
-                StatusCode = TodoStatus.Incomplete
+                StatusCode = TodoStatus.Incomplete,
+                StatusTodoId = "1#T1"
             };
 
             var request = new UpdateTodoRequest
@@ -144,7 +147,8 @@ namespace TestProject
                 TodoId = "T1",
                 Title = "Old",
                 Content = "Old content",
-                StatusCode = TodoStatus.Incomplete
+                StatusCode = TodoStatus.Incomplete,
+                StatusTodoId = "1#T1"
             };
 
             var existingReminder = new TodoReminder
@@ -199,7 +203,8 @@ namespace TestProject
                 TodoId = "T1",
                 Title = "Old",
                 Content = "Old content",
-                StatusCode = TodoStatus.Incomplete
+                StatusCode = TodoStatus.Incomplete,
+                StatusTodoId = "1#T1"
             };
 
             var request = new SetReminderRequest

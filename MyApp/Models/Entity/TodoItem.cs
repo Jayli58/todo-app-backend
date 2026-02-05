@@ -16,5 +16,6 @@ namespace MyApp.Models.Entity
         public long? RemindTimestamp { get; set; }
         // 1 - Incomplete, 2 - Complete, 3 - Deleted
         public TodoStatus StatusCode { get; set; }
+        public required string StatusTodoId { get; set; }
     }
 }

@@ -11,11 +11,18 @@ namespace MyApp.Data.Dynamo
         public static QueryRequest CreateUserIdQuery(
             string tableName,
             string userId,
+            // can be "UserId = :userId" or "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd"
+            string keyConditionExpression,
             string? filterExpression,
             Dictionary<string, AttributeValue> values,
             int limit,
             string? paginationToken,
-            bool scanIndexForward = false)
+            // scanIndexForward controls the sort order of query results. For DynamoDB Query:
+            // - true (default): ascending order by the sort key.
+            // - false: descending order by the sort key.
+            bool scanIndexForward = false,
+            // tells DynamoDB to run the query against a specific index instead of the base table. If you omit it, the query runs against the full table’s primary key.
+            string? indexName = null)
         {
             var expressionValues = new Dictionary<string, AttributeValue>(values)
             {
@@ -25,10 +32,15 @@ namespace MyApp.Data.Dynamo
             var request = new QueryRequest
             {
                 TableName = tableName,
-                KeyConditionExpression = "UserId = :userId",
+                KeyConditionExpression = keyConditionExpression,
                 ExpressionAttributeValues = expressionValues,
                 ScanIndexForward = scanIndexForward
             };
+
+            if (!string.IsNullOrWhiteSpace(indexName))
+            {
+                request.IndexName = indexName;
+            }
 
             if (limit > 0)
             {
