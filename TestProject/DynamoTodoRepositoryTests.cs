@@ -46,8 +46,8 @@ namespace TestProject
         }
 
         [Fact]
-        // Test that the repository returns null for nextToken when there are no matching items
-        public async Task SearchTodosPageAsync_EmptyFilteredPages_ReturnsNullToken()
+        // Test that the repository returns nextToken for empty pages
+        public async Task SearchTodosPageAsync_EmptyFilteredPages_ReturnsNextToken()
         {
             var clientMock = new Mock<IAmazonDynamoDB>();
             var contextMock = new Mock<IDynamoDBContext>();
@@ -58,29 +58,27 @@ namespace TestProject
                 ["TodoId"] = new AttributeValue { S = "T1" }
             };
 
-            // Setup the mock to return two empty pages
+            // Setup the mock to return an empty page with a continuation token
+            // such case would only happen when search result is empty but there are more pages to be fetched
             clientMock
-                .SetupSequence(c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new QueryResponse
                 {
                     Items = new List<Dictionary<string, AttributeValue>>(),
                     LastEvaluatedKey = lastEvaluatedKey
-                })
-                .ReturnsAsync(new QueryResponse
-                {
-                    Items = new List<Dictionary<string, AttributeValue>>(),
-                    LastEvaluatedKey = null
                 });
 
             var repo = new DynamoTodoRepository(clientMock.Object, contextMock.Object);
 
             var result = await repo.SearchTodosPageAsync("U1", "milk", 10, null);
 
+            var expectedToken = MyApp.Data.Dynamo.DynamoQueryHelper.EncodePaginationToken(lastEvaluatedKey);
+
             Assert.Empty(result.Items);
-            Assert.Null(result.NextToken);
+            Assert.Equal(expectedToken, result.NextToken);
             clientMock.Verify(
                 c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()),
-                Times.Exactly(2));
+                Times.Once);
         }
     }
 }
