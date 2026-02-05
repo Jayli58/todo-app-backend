@@ -42,6 +42,9 @@ namespace MyApp.Services
                 TodoId = todoId,
                 Title = request.Title,
                 Content = request.Content,
+                // store lower case for case insensitive search
+                TitleLower = request.Title.ToLowerInvariant(),
+                ContentLower = request.Content?.ToLowerInvariant(),
                 StatusCode = TodoStatus.Incomplete,
                 RemindTimestamp = null,
                 ActiveTodoId = todoId
@@ -138,10 +141,16 @@ namespace MyApp.Services
 
             // Update only fields that the client actually sent
             if (request.Title != null)
+            {
                 existing.Title = request.Title;
+                existing.TitleLower = request.Title.ToLowerInvariant();
+            }
 
             if (request.Content != null)
+            {
                 existing.Content = request.Content;
+                existing.ContentLower = request.Content.ToLowerInvariant();
+            }
 
             if (request.StatusCode.HasValue)
             {

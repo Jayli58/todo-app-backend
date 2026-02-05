@@ -1,5 +1,6 @@
-﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DataModel;
 using MyApp.Models.Enum;
+using System.Text.Json.Serialization;
 
 namespace MyApp.Models.Entity
 {
@@ -13,6 +14,12 @@ namespace MyApp.Models.Entity
         public required string TodoId { get; set; }
         public required string Title { get; set; }
         public string? Content { get; set; }
+        // store lower case for case insensitive search
+        // JsonIgnore to prevent it from being serialized into API responses
+        [JsonIgnore]
+        public string? TitleLower { get; set; }
+        [JsonIgnore]
+        public string? ContentLower { get; set; }
         public long? RemindTimestamp { get; set; }
         // 1 - Incomplete, 2 - Complete, 3 - Deleted
         public TodoStatus StatusCode { get; set; }

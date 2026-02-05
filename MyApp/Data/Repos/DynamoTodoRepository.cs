@@ -72,11 +72,13 @@ namespace MyApp.Data.Repos
 
             var values = new Dictionary<string, AttributeValue>
             {
-                [":query"] = new AttributeValue { S = query.Trim() }
+                // allow case insensitive search
+                [":queryLower"] = new AttributeValue { S = query.Trim().ToLowerInvariant() }
             };
 
             const string filterExpression =
-                "contains(Title, :query) OR contains(Content, :query)";
+                // allow case insensitive search
+                "contains(TitleLower, :queryLower) OR contains(ContentLower, :queryLower)";
 
             string keyConditionExpression = "UserId = :userId";
 

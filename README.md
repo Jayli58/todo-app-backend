@@ -110,6 +110,8 @@ TEST_MAIL_RECEIVER=YOUR_MAIL_ADDRESS
 
 > **Note**: After deploying the new `ActiveTodoId` index, run the backfill tool once to populate `ActiveTodoId`. You can optionally remove the legacy `StatusTodoId` attribute using `--cleanup-status-todo-id`.
 
+> **Note**: After enabling case-insensitive search, run the backfill tool once to populate `TitleLower`/`ContentLower` for existing todos: `dotnet run --project Tools/BackfillTodoSearchLower -- --region <region> --table Todos`. Use `--dry-run` to preview changes.
+
 ## 🏃 Running Locally
 
 You can run the application as a standard ASP.NET Core Web API locally:
@@ -140,6 +142,7 @@ dotnet test
 *   **`RemainderLambda/`**: Separate project for background reminder processing (includes dedicated unit tests).
 *   **`TestProject/`**: Unit tests for the main `MyApp` project.
 *   **`Tools/BackfillStatusTodoId/`**: Backfill utility for `ActiveTodoId` (with optional cleanup of legacy `StatusTodoId`).
+*   **`Tools/BackfillTodoSearchLower/`**: Backfill utility for `TitleLower`/`ContentLower` to support case-insensitive search.
 
 ## ☁️ Deployment
 

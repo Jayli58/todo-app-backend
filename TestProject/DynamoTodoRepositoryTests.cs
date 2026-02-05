@@ -45,5 +45,34 @@ namespace TestProject
                 c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
+
+        [Fact]
+        public async Task SearchTodosPageAsync_NormalizesQuery_ForCaseInsensitiveSearch()
+        {
+            var clientMock = new Mock<IAmazonDynamoDB>();
+            var contextMock = new Mock<IDynamoDBContext>();
+            QueryRequest? capturedRequest = null;
+
+            clientMock
+                .Setup(c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()))
+                .Callback<QueryRequest, CancellationToken>((request, _) => capturedRequest = request)
+                .ReturnsAsync(new QueryResponse
+                {
+                    Items = new List<Dictionary<string, AttributeValue>>(),
+                    LastEvaluatedKey = null
+                });
+
+            var repo = new DynamoTodoRepository(clientMock.Object, contextMock.Object);
+
+            await repo.SearchTodosPageAsync("U1", "  BaL ", 10, null);
+
+            Assert.NotNull(capturedRequest);
+            Assert.Equal(
+                "contains(TitleLower, :queryLower) OR contains(ContentLower, :queryLower)",
+                capturedRequest!.FilterExpression);
+            Assert.Equal(
+                "bal",
+                capturedRequest.ExpressionAttributeValues[":queryLower"].S);
+        }
     }
 }
