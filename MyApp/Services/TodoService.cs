@@ -34,19 +34,18 @@ namespace MyApp.Services
             if (request.Content != null && request.Content.Length > CONTENT_MAX)
                 throw new BaseException($"Content must be at most {CONTENT_MAX} characters.");
 
+            string todoId = UlidGenerator.NewUlid();
             TodoItem todo = new TodoItem
             {
                 UserId = _currentUser.UserId,
                 // Generate a new ULID for the TodoId
-                TodoId = UlidGenerator.NewUlid(),
+                TodoId = todoId,
                 Title = request.Title,
                 Content = request.Content,
                 StatusCode = TodoStatus.Incomplete,
-                RemindTimestamp = null
+                RemindTimestamp = null,
+                StatusTodoId = $"{(int)TodoStatus.Incomplete:D1}#{todoId}"
             };
-
-            // Update StatusTodoId for GSI query; D1 is for single digit
-            todo.StatusTodoId = $"{(int)todo.StatusCode:D1}#{todo.TodoId}";
 
             TodoItem insertedTodo = await _repo.AddTodoAsync(todo);
 
