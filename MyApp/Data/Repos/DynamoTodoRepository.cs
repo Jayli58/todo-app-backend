@@ -2,6 +2,7 @@ using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
+using System;
 using System.Linq;
 using MyApp.Data.Dynamo;
 using MyApp.Models.Entity;
@@ -59,12 +60,14 @@ namespace MyApp.Data.Repos
                 "contains(Title, :query) OR contains(Content, :query)";
 
             var (keyConditionExpression, keyValues) = BuildStatusKeyCondition(null);
+            // kvp is key-value pair
             foreach (var kvp in values)
             {
                 keyValues[kvp.Key] = kvp.Value;
             }
 
-            return await QueryPageAsync(userId, keyConditionExpression, filterExpression, keyValues, limit, paginationToken);
+            // For search, omit the DynamoDB limit to use the default 1 MB page size.
+            return await QueryPageAsync(userId, keyConditionExpression, filterExpression, keyValues, 0, paginationToken);
         }
 
         // Query DynamoDB for todo items with optional filter
