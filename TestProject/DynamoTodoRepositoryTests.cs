@@ -59,7 +59,7 @@ namespace TestProject
             };
 
             // Setup the mock to return an empty page with a continuation token
-            // such case would only happen when search result is empty but there are more pages to be fetched
+            // this would only happen when search result is empty but there are more pages to be fetched
             clientMock
                 .Setup(c => c.QueryAsync(It.IsAny<QueryRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new QueryResponse
