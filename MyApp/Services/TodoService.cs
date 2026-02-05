@@ -44,7 +44,7 @@ namespace MyApp.Services
                 Content = request.Content,
                 StatusCode = TodoStatus.Incomplete,
                 RemindTimestamp = null,
-                StatusTodoId = $"{(int)TodoStatus.Incomplete:D1}#{todoId}"
+                ActiveTodoId = todoId
             };
 
             TodoItem insertedTodo = await _repo.AddTodoAsync(todo);
@@ -146,8 +146,9 @@ namespace MyApp.Services
             if (request.StatusCode.HasValue)
             {
                 existing.StatusCode = request.StatusCode.Value;
-                // Update StatusTodoId for GSI query; D1 is for single digit
-                existing.StatusTodoId = $"{(int)existing.StatusCode:D1}#{existing.TodoId}";
+                existing.ActiveTodoId = existing.StatusCode == TodoStatus.Deleted
+                    ? null
+                    : existing.TodoId;
             }
 
             if (request.RemindTimestamp.HasValue)

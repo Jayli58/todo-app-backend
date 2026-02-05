@@ -11,7 +11,7 @@ namespace MyApp.Data.Dynamo
         public static QueryRequest CreateUserIdQuery(
             string tableName,
             string userId,
-            // can be "UserId = :userId" or "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd"
+            // can be "UserId = :userId" with optional filters
             string keyConditionExpression,
             string? filterExpression,
             Dictionary<string, AttributeValue> values,

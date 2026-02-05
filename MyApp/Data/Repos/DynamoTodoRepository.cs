@@ -33,10 +33,29 @@ namespace MyApp.Data.Repos
             int limit,
             string? paginationToken)
         {
-            // return a key condition expression and bound values
-            var (keyConditionExpression, values) = BuildStatusKeyCondition(status);
-            // no need to pass filterExpression as status is part of the key
-            return await QueryPageAsync(userId, keyConditionExpression, null, values, limit, paginationToken);
+            if (status == TodoStatus.Deleted)
+            {
+                return (Array.Empty<TodoItem>(), null);
+            }
+
+            string keyConditionExpression = "UserId = :userId";
+            string? filterExpression = null;
+            var values = new Dictionary<string, AttributeValue>();
+
+            if (status.HasValue)
+            {
+                filterExpression = "StatusCode = :statusCode";
+                values[":statusCode"] = new AttributeValue { N = ((int)status.Value).ToString() };
+            }
+
+            return await QueryPageAsync(
+                userId,
+                keyConditionExpression,
+                filterExpression,
+                values,
+                limit,
+                paginationToken,
+                indexName: "UserIdActiveTodoId");
         }
 
         public async Task<(IEnumerable<TodoItem> Items, string? NextToken)> SearchTodosPageAsync(
@@ -59,27 +78,29 @@ namespace MyApp.Data.Repos
             const string filterExpression =
                 "contains(Title, :query) OR contains(Content, :query)";
 
-            var (keyConditionExpression, keyValues) = BuildStatusKeyCondition(null);
-            // kvp is key-value pair
-            foreach (var kvp in values)
-            {
-                keyValues[kvp.Key] = kvp.Value;
-            }
+            string keyConditionExpression = "UserId = :userId";
 
             // For search, omit the DynamoDB limit to use the default 1 MB page size.
-            return await QueryPageAsync(userId, keyConditionExpression, filterExpression, keyValues, 0, paginationToken);
+            return await QueryPageAsync(
+                userId,
+                keyConditionExpression,
+                filterExpression,
+                values,
+                0,
+                paginationToken,
+                indexName: "UserIdActiveTodoId");
         }
 
         // Query DynamoDB for todo items with optional filter
         // ref: https://codewithmukesh.com/blog/pagination-in-amazon-dynamodb-with-dotnet/
         private async Task<(IEnumerable<TodoItem> Items, string? NextToken)> QueryPageAsync(
             string userId,
-            // keyConditionExpression can be "UserId = :userId" or "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd"
             string keyConditionExpression,
             string? filterExpression,
             Dictionary<string, AttributeValue> values,
             int limit,
-            string? paginationToken)
+            string? paginationToken,
+            string? indexName = null)
         {
             QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
                 TableName,
@@ -90,7 +111,7 @@ namespace MyApp.Data.Repos
                 limit,
                 paginationToken,
                 scanIndexForward: false,
-                indexName: "UserIdStatusTodoId");
+                indexName: indexName);
 
             QueryResponse response = await _client.QueryAsync(request);
             List<TodoItem> items = response.Items
@@ -101,35 +122,6 @@ namespace MyApp.Data.Repos
             return (items, nextToken);
         }
 
-        // Build key condition expression and values for status
-        internal static (string KeyConditionExpression, Dictionary<string, AttributeValue> Values) BuildStatusKeyCondition(
-            TodoStatus? status)
-        {
-            if (status.HasValue)
-            {
-                // convert enum to string with at least 1 digit
-                string statusPrefix = ((int)status.Value).ToString("D1") + "#";
-                // return expression with given status
-                return (
-                    "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
-                    new Dictionary<string, AttributeValue>
-                    {
-                        [":statusStart"] = new AttributeValue { S = statusPrefix },
-                        [":statusEnd"] = new AttributeValue { S = statusPrefix + "~" }
-                    }
-                );
-            }
-
-            // return expression with all non-deleted status
-            return (
-                "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
-                new Dictionary<string, AttributeValue>
-                {
-                    [":statusStart"] = new AttributeValue { S = ((int)TodoStatus.Incomplete).ToString("D1") + "#" },
-                    [":statusEnd"] = new AttributeValue { S = ((int)TodoStatus.Complete).ToString("D1") + "#~" }
-                }
-            );
-        }
 
         public async Task<TodoItem> AddTodoAsync(TodoItem todo)
         {
@@ -163,8 +155,7 @@ namespace MyApp.Data.Repos
             if (todo == null) return false;
 
             todo.StatusCode = TodoStatus.Deleted; // 3
-            // Update StatusTodoId for GSI query; D1 is for single digit
-            todo.StatusTodoId = $"{(int)todo.StatusCode:D1}#{todo.TodoId}";
+            todo.ActiveTodoId = null;
             await _context.SaveAsync(todo);
             return true;
         }

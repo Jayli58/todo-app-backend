@@ -45,7 +45,7 @@ namespace TestProject
                 Content = content ?? "",
                 StatusCode = TodoStatus.Incomplete,
                 RemindTimestamp = null,
-                StatusTodoId = $"{(int)TodoStatus.Incomplete:D1}#{todoId}"
+                ActiveTodoId = todoId
             };
         }
 
@@ -108,7 +108,7 @@ namespace TestProject
                 Title = "Old",
                 Content = "Old content",
                 StatusCode = TodoStatus.Incomplete,
-                StatusTodoId = "1#T1"
+                ActiveTodoId = "T1"
             };
 
             var request = new UpdateTodoRequest
@@ -148,7 +148,7 @@ namespace TestProject
                 Title = "Old",
                 Content = "Old content",
                 StatusCode = TodoStatus.Incomplete,
-                StatusTodoId = "1#T1"
+                ActiveTodoId = "T1"
             };
 
             var existingReminder = new TodoReminder
@@ -204,7 +204,7 @@ namespace TestProject
                 Title = "Old",
                 Content = "Old content",
                 StatusCode = TodoStatus.Incomplete,
-                StatusTodoId = "1#T1"
+                ActiveTodoId = "T1"
             };
 
             var request = new SetReminderRequest

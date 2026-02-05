@@ -9,17 +9,17 @@ awslocal dynamodb create-table \
   --attribute-definitions \
       AttributeName=UserId,AttributeType=S \
       AttributeName=TodoId,AttributeType=S \
-      AttributeName=StatusTodoId,AttributeType=S \
+      AttributeName=ActiveTodoId,AttributeType=S \
   --key-schema \
       AttributeName=UserId,KeyType=HASH \
       AttributeName=TodoId,KeyType=RANGE \
   --global-secondary-indexes \
       "[\
         {\
-          \"IndexName\": \"UserIdStatusTodoId\",\
+          \"IndexName\": \"UserIdActiveTodoId\",\
           \"KeySchema\": [\
             {\"AttributeName\":\"UserId\",\"KeyType\":\"HASH\"},\
-            {\"AttributeName\":\"StatusTodoId\",\"KeyType\":\"RANGE\"}\
+            {\"AttributeName\":\"ActiveTodoId\",\"KeyType\":\"RANGE\"}\
           ],\
           \"Projection\": {\"ProjectionType\":\"ALL\"}\
         }\

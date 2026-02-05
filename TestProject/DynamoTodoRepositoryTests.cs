@@ -3,7 +3,6 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using Moq;
 using MyApp.Data.Repos;
-using MyApp.Models.Enum;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -11,40 +10,6 @@ namespace TestProject
 {
     public class DynamoTodoRepositoryTests
     {
-        [Fact]
-        public void BuildStatusKeyCondition_WithStatus_ReturnsStatusExpression()
-        {
-            var result = DynamoTodoRepository.BuildStatusKeyCondition(TodoStatus.Complete);
-
-            Assert.Equal(
-                "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
-                result.KeyConditionExpression);
-            Assert.True(result.Values.ContainsKey(":statusStart"));
-            Assert.True(result.Values.ContainsKey(":statusEnd"));
-            Assert.Equal(
-                ((int)TodoStatus.Complete).ToString("D1") + "#",
-                result.Values[":statusStart"].S);
-            Assert.Equal(
-                ((int)TodoStatus.Complete).ToString("D1") + "#~",
-                result.Values[":statusEnd"].S);
-        }
-
-        [Fact]
-        public void BuildStatusKeyCondition_NoStatus_ReturnsDefaultExpression()
-        {
-            var result = DynamoTodoRepository.BuildStatusKeyCondition(null);
-
-            Assert.Equal(
-                "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd",
-                result.KeyConditionExpression);
-            Assert.Equal(
-                ((int)TodoStatus.Incomplete).ToString("D1") + "#",
-                result.Values[":statusStart"].S);
-            Assert.Equal(
-                ((int)TodoStatus.Complete).ToString("D1") + "#~",
-                result.Values[":statusEnd"].S);
-        }
-
         [Fact]
         // Test that the repository returns nextToken for empty pages
         public async Task SearchTodosPageAsync_EmptyFilteredPages_ReturnsNextToken()
