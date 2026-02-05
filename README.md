@@ -108,6 +108,8 @@ TEST_MAIL_RECEIVER=YOUR_MAIL_ADDRESS
 
 > **Note**: For local development, this project leverages **LocalStack** to simulate AWS services. This allows you to run **DynamoDB** (including Streams and TTL triggers) and **SES** locally without connecting to the real AWS cloud. The configuration and setup scripts for LocalStack (including **initial DB tables creation**) are located in the `MyApp/local-aws` directory. For email delivery, both SES and Resend were prepared; Resend is the deployed option in `RemainderLambda` because SES production approval is difficult to obtain.
 
+> **Note**: After deploying the new `ActiveTodoId` index, run the backfill tool once to populate `ActiveTodoId`. You can optionally remove the legacy `StatusTodoId` attribute using `--cleanup-status-todo-id`.
+
 ## 🏃 Running Locally
 
 You can run the application as a standard ASP.NET Core Web API locally:
@@ -137,6 +139,7 @@ dotnet test
     *   `Models/`: DTOs, Entities, and Enums.
 *   **`RemainderLambda/`**: Separate project for background reminder processing (includes dedicated unit tests).
 *   **`TestProject/`**: Unit tests for the main `MyApp` project.
+*   **`Tools/BackfillStatusTodoId/`**: Backfill utility for `ActiveTodoId` (with optional cleanup of legacy `StatusTodoId`).
 
 ## ☁️ Deployment
 

@@ -14,9 +14,12 @@ internal static class Program
         string tableName = GetArgValue(args, "--table", "-t") ?? DefaultTableName;
         string? region = GetArgValue(args, "--region", "-r");
         bool dryRun = args.Any(arg => string.Equals(arg, "--dry-run", StringComparison.OrdinalIgnoreCase));
+        // cleanupStatusTodoId is only for cleaning up StatusTodoId, not for backfilling ActiveTodoId
+        bool cleanupStatusTodoId = args.Any(arg => string.Equals(arg, "--cleanup-status-todo-id", StringComparison.OrdinalIgnoreCase));
 
         Console.WriteLine($"Backfill ActiveTodoId in table '{tableName}'.");
         Console.WriteLine(dryRun ? "Mode: dry-run" : "Mode: write");
+        Console.WriteLine(cleanupStatusTodoId ? "Cleanup: StatusTodoId" : "Cleanup: none");
 
         using var client = string.IsNullOrWhiteSpace(region)
             ? new AmazonDynamoDBClient()
@@ -31,10 +34,15 @@ internal static class Program
 
         do
         {
+            // clean up status todo id if cleanupStatusTodoId is true
+            string projectionExpression = cleanupStatusTodoId
+                ? "UserId, TodoId, StatusCode, ActiveTodoId, StatusTodoId"
+                : "UserId, TodoId, StatusCode, ActiveTodoId";
+
             var request = new ScanRequest
             {
                 TableName = tableName,
-                ProjectionExpression = "UserId, TodoId, StatusCode, ActiveTodoId",
+                ProjectionExpression = projectionExpression,
                 ExclusiveStartKey = lastEvaluatedKey
             };
 
@@ -59,41 +67,49 @@ internal static class Program
 
                 bool isDeleted = statusCode == DeletedStatusCode;
                 bool hasActiveTodoId = TryGetString(item, "ActiveTodoId", out var activeTodoId);
+                bool hasStatusTodoId = cleanupStatusTodoId && TryGetString(item, "StatusTodoId", out _);
+
+                var setActions = new List<string>();
+                var removeActions = new List<string>();
+                var expressionAttributeValues = new Dictionary<string, AttributeValue>();
 
                 if (isDeleted)
                 {
-                    if (!hasActiveTodoId)
+                    if (hasActiveTodoId)
                     {
-                        continue;
+                        removeActions.Add("ActiveTodoId");
                     }
-
-                    if (!dryRun)
-                    {
-                        var updateRequest = new UpdateItemRequest
-                        {
-                            TableName = tableName,
-                            Key = new Dictionary<string, AttributeValue>
-                            {
-                                ["UserId"] = new AttributeValue { S = userId },
-                                ["TodoId"] = new AttributeValue { S = todoId }
-                            },
-                            UpdateExpression = "REMOVE ActiveTodoId"
-                        };
-
-                        await client.UpdateItemAsync(updateRequest);
-                    }
-
-                    updated++;
-                    continue;
+                }
+                else if (!hasActiveTodoId || !string.Equals(activeTodoId, todoId, StringComparison.Ordinal))
+                {
+                    setActions.Add("ActiveTodoId = :activeTodoId");
+                    expressionAttributeValues[":activeTodoId"] = new AttributeValue { S = todoId };
                 }
 
-                if (hasActiveTodoId && string.Equals(activeTodoId, todoId, StringComparison.Ordinal))
+                if (cleanupStatusTodoId && hasStatusTodoId)
+                {
+                    removeActions.Add("StatusTodoId");
+                }
+
+                if (setActions.Count == 0 && removeActions.Count == 0)
                 {
                     continue;
                 }
 
                 if (!dryRun)
                 {
+                    string updateExpression = string.Empty;
+                    if (setActions.Count > 0)
+                    {
+                        updateExpression = "SET " + string.Join(", ", setActions);
+                    }
+
+                    if (removeActions.Count > 0)
+                    {
+                        updateExpression += (updateExpression.Length > 0 ? " " : string.Empty)
+                            + "REMOVE " + string.Join(", ", removeActions);
+                    }
+
                     var updateRequest = new UpdateItemRequest
                     {
                         TableName = tableName,
@@ -102,12 +118,13 @@ internal static class Program
                             ["UserId"] = new AttributeValue { S = userId },
                             ["TodoId"] = new AttributeValue { S = todoId }
                         },
-                        UpdateExpression = "SET ActiveTodoId = :activeTodoId",
-                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-                        {
-                            [":activeTodoId"] = new AttributeValue { S = todoId }
-                        }
+                        UpdateExpression = updateExpression
                     };
+
+                    if (expressionAttributeValues.Count > 0)
+                    {
+                        updateRequest.ExpressionAttributeValues = expressionAttributeValues;
+                    }
 
                     await client.UpdateItemAsync(updateRequest);
                 }
