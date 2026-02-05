@@ -68,6 +68,7 @@ namespace MyApp.Data.Repos
         }
 
         // Query DynamoDB for todo items with optional filter
+        // ref: https://codewithmukesh.com/blog/pagination-in-amazon-dynamodb-with-dotnet/
         private async Task<(IEnumerable<TodoItem> Items, string? NextToken)> QueryPageAsync(
             string userId,
             // keyConditionExpression can be "UserId = :userId" or "UserId = :userId AND StatusTodoId BETWEEN :statusStart AND :statusEnd"
@@ -77,38 +78,23 @@ namespace MyApp.Data.Repos
             int limit,
             string? paginationToken)
         {
-            string? nextToken = paginationToken;
-            List<TodoItem> items = new();
-            Dictionary<string, AttributeValue>? lastEvaluatedKey;
+            QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
+                TableName,
+                userId,
+                keyConditionExpression,
+                filterExpression,
+                values,
+                limit,
+                paginationToken,
+                scanIndexForward: false,
+                indexName: "UserIdStatusTodoId");
 
-            // GSI + filterExpression could still return fewer than limit items
-            // dynamodb returns LastEvaluatedKey based on items it scanned, not on items that passed the filter
-            // so we need to keep querying until we reach the requested limit or the end
-            do
-            {
-                QueryRequest request = DynamoQueryHelper.CreateUserIdQuery(
-                    TableName,
-                    userId,
-                    keyConditionExpression,
-                    filterExpression,
-                    values,
-                    limit - items.Count,
-                    nextToken,
-                    scanIndexForward: false,
-                    indexName: "UserIdStatusTodoId");
+            QueryResponse response = await _client.QueryAsync(request);
+            List<TodoItem> items = response.Items
+                .Select(item => _context.FromDocument<TodoItem>(Document.FromAttributeMap(item)))
+                .ToList();
 
-                QueryResponse response = await _client.QueryAsync(request);
-                items.AddRange(response.Items
-                    .Select(item => _context.FromDocument<TodoItem>(Document.FromAttributeMap(item)))
-                    .ToList());
-
-                lastEvaluatedKey = response.LastEvaluatedKey;
-                nextToken = DynamoQueryHelper.EncodePaginationToken(lastEvaluatedKey);
-            }
-            // dynamodb returns LastEvaluatedKey based on items it scanned, not on items that passed the filter
-            // so we need to keep querying until we reach the requested limit or the end
-            while (items.Count < limit && lastEvaluatedKey != null && lastEvaluatedKey.Count > 0);
-
+            string? nextToken = DynamoQueryHelper.EncodePaginationToken(response.LastEvaluatedKey);
             return (items, nextToken);
         }
 

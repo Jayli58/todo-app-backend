@@ -9,9 +9,21 @@ awslocal dynamodb create-table \
   --attribute-definitions \
       AttributeName=UserId,AttributeType=S \
       AttributeName=TodoId,AttributeType=S \
+      AttributeName=StatusTodoId,AttributeType=S \
   --key-schema \
       AttributeName=UserId,KeyType=HASH \
       AttributeName=TodoId,KeyType=RANGE \
+  --global-secondary-indexes \
+      "[\
+        {\
+          \"IndexName\": \"UserIdStatusTodoId\",\
+          \"KeySchema\": [\
+            {\"AttributeName\":\"UserId\",\"KeyType\":\"HASH\"},\
+            {\"AttributeName\":\"StatusTodoId\",\"KeyType\":\"RANGE\"}\
+          ],\
+          \"Projection\": {\"ProjectionType\":\"ALL\"}\
+        }\
+      ]" \
   --billing-mode PAY_PER_REQUEST \
   # Create the table quietly
   >/dev/null 2>&1 || echo "[init] Todos already exists"
