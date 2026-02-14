@@ -14,7 +14,7 @@ namespace MyApp.Models.Entity
         public required string TodoId { get; set; }
         public required string Title { get; set; }
         public string? Content { get; set; }
-        // store lower case for case insensitive search
+        // store lower case for case insensitive searchs
         // JsonIgnore to prevent it from being serialized into API responses
         [JsonIgnore]
         public string? TitleLower { get; set; }
